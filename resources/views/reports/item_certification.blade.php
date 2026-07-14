@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Acta de Medición N° {{ $certification->number }}</title>
+</head>
+<style type="text/css">
+    body {
+        font-family: arial, sans-serif;
+        font-size: 10px;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 10px;
+    }
+    td, th {
+        border: 1px solid #000;
+        padding: 3px 5px;
+    }
+    th {
+        text-align: center;
+        background-color: #dddddd;
+    }
+    h2 {
+        text-align: center;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    h4 {
+        text-align: center;
+        font-size: 11px;
+        margin: 2px 0;
+    }
+    .datos-generales p {
+        margin: 2px 0;
+        font-size: 11px;
+    }
+    .rubro-section td {
+        font-weight: bold;
+        text-align: left;
+    }
+</style>
+<body>
+    <h2>ACTA DE MEDICIÓN</h2>
+    <h4>PLANILLA DE CERTIFICACIÓN N° {{ $certification->number }}</h4>
+    <h4>CONTRATO N° {{ $contract->number_year }} - LOTE N° {{ $order->component->code }}</h4>
+    <h4>EMPRESA CONSTRUCTORA: {{ $contract->provider->description }}</h4>
+    <h4>PERIODO: {{ $certification->period }}</h4>
+
+    <div class="datos-generales">
+        <p>
+            En la Localidad: <strong>{{ $order->locality->description }}</strong> -
+            Distrito: <strong>{{ $order->locality->district->description }}</strong> -
+            Departamento: <strong>{{ $order->locality->district->department->description }}</strong>,
+            a los {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }},
+            en presencia de
+            @if ($contract->fiscal1)
+                {{ $contract->fiscal1->name }} {{ $contract->fiscal1->lastname }}
+            @else
+                (sin fiscal asignado)
+            @endif
+            representante de la fiscalización y
+            @if ($contract->contratista)
+                {{ $contract->contratista->name }} {{ $contract->contratista->lastname }}
+            @else
+                (sin representante asignado)
+            @endif
+            representante del Contratista, se detalla a continuación:
+        </p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th rowspan="2">N°</th>
+                <th rowspan="2">Descripción</th>
+                <th rowspan="2">Cant.</th>
+                <th rowspan="2">Unid.</th>
+                <th colspan="2">Anterior</th>
+                <th colspan="2">Actual</th>
+                <th colspan="2">Acumulado</th>
+            </tr>
+            <tr>
+                <th>mdo</th>
+                <th>mat</th>
+                <th>mdo</th>
+                <th>mat</th>
+                <th>mdo</th>
+                <th>mat</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($rubros as $item)
+                @if ($item->rubro_id == 9999)
+                    <tr class="rubro-section">
+                        <td>{{ $item->item_number }}</td>
+                        <td colspan="8">{{ $item->subitem->description }}</td>
+                    </tr>
+                @else
+                    @php
+                        $anterior = $anteriores[$item->rubro_id] ?? 0;
+                        $actual = $actuales[$item->rubro_id] ?? 0;
+                        $acumulado = $anterior + $actual;
+                    @endphp
+                    <tr>
+                        <td style="text-align: center;">{{ $item->item_number }}</td>
+                        <td>{{ $item->rubro->description }}</td>
+                        <td style="text-align: center;">{{ number_format($item->quantity, 2, ',', '.') }}</td>
+                        <td style="text-align: center;">{{ $item->rubro->orderPresentations->description }}</td>
+                        <td style="text-align: right;">{{ $anterior > 0 ? number_format($anterior, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ $anterior > 0 ? number_format($anterior, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ $actual > 0 ? number_format($actual, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ $actual > 0 ? number_format($actual, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
+                    </tr>
+                @endif
+            @endforeach
+        </tbody>
+    </table>
+
+    <br><br>
+    <table style="border: none; width: 100%;">
+        <tr style="border: none;">
+            <td style="border: none; text-align: center; width: 50%;">
+                _____________________________<br>
+                Fiscalización
+            </td>
+            <td style="border: none; text-align: center; width: 50%;">
+                _____________________________<br>
+                Contratista
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

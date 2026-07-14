@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Panel General de Llamados</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+</head>
+<style type="text/css">
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 8px;
+    }
+
+    td,
+    th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 4px;
+        font-size: 10px;
+    }
+
+    thead tr {
+        background-color: #dddddd;
+        padding: 2px;
+        font-size: 8px;
+    }
+
+    h2 {
+        text-align: center;
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+
+    h3 {
+        text-align: left;
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+
+    body {
+        font-size: 12px;
+        margin-top: 120px; /* Ajusta este valor según la altura de tu encabezado */
+        margin-bottom: 50px; /* Ajusta este valor según la altura de tu pie de página */
+    }
+
+    .section {
+        margin-top: 30px;
+        padding: 50px;
+        background: #fff;
+        font-size: 8px;
+    }
+
+    .pdf-btn {
+        margin-top: 30px;
+    }
+
+    .columna1 {
+        width: 1%;
+        text-align: center;
+    }
+
+    .columna2 {
+        width: 25%;
+        text-align: left;
+    }
+
+    .columna3 {
+        width: 7%;
+        text-align: left;
+    }
+
+    .columna4 {
+        width: 16%;
+        text-align: left;
+    }
+
+    .columna5 {
+        width: 2%;
+        text-align: center;
+    }
+
+    .columna6 {
+        width: 4%;
+        text-align: center;
+    }
+
+    .columna7 {
+        width: 4%;
+        text-align: center;
+    }
+
+    .columna8 {
+        width: 4%;
+        text-align: center;
+    }
+
+    .columna9 {
+        width: 5%;
+        text-align: left;
+    }
+
+    .columna10 {
+        width: 9%;
+        text-align: center;
+    }
+
+    .columna11 {
+        width: 2%;
+        text-align: center;
+    }
+
+    p.centrado {
+        text-align: center;
+    }
+
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100px; /* Ajusta esta altura según el contenido del header */
+        text-align: center;
+        line-height: 1.5;
+        font-size: 12px;
+        /* border-bottom: 1px solid #ddd; */
+        background-color: white; /* Asegura que el fondo del encabezado sea blanco */
+    }
+
+    footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        text-align: center;
+        font-size: 10px;
+        color: #777;
+        border-top: 1px solid #ddd;
+        background-color: white; /* Asegura que el fondo del pie de página sea blanco */
+    }
+
+    .page-break {
+        page-break-before: always;
+    }
+</style>
+
+<body>
+    
+    <header>
+        <img src="img/logoVI_2.png" alt="Logo" style="height: 65px;"><br> <!-- Ajusta el tamaño de la imagen -->
+        <p style="text-align: right; font-weight: bold; margin: 5px 0;"> 01/07/2025 13:15:32</p>
+        <h2 style="color:#ff0000; margin: 5px 0;">LISTADO TOTAL DE ORDENES</h2> 
+    </header>
+
+    <footer>
+        Página <span class="page"></span> de <span class="topage"></span>
+    </footer>   
+    
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>N°CONTRATO-CONTRATISTA</th>
+                <th>N°ORDEN-FECHA</th>
+                <th>MONTO ORDEN</th>
+                <th>FECHA INICIO PLAZO</th>
+                <th>DIAS PLAZO</th>
+                <th>FECHA FIN PLAZO</th>
+                <th>FISCAL</th>
+                <th>DPTO-DISTRITO-LOCALIDAD</th>
+                <th>SUB_COMPONENTE</th>
+            </tr>
+        </thead>
+        <tbody>
+                                            <tr>
+                    <td>1</td>
+                    <td> 20/2024 - ALEJANDRO RAUL PEREZ HERAS</td>
+                    <td> 6.1 - 1-19/03/2025</td>
+                    <td> 22.276.182 </td>
+                    <td> 25/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        24/04/2025
+                                
+                        </span>
+                    </td>
+                    <td> Celso Martínez</td>
+                    
+                    <td> AMAMBAY-Cerro Corá-Campo Flor</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>2</td>
+                    <td> 20/2024 - ALEJANDRO RAUL PEREZ HERAS</td>
+                    <td> 6.1 - 1-04/04/2025</td>
+                    <td> 22.276.182 </td>
+                    <td> 07/04/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    07/05/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Celso Martínez</td>
+                    
+                    <td> CAAGUAZU-Coronel Oviedo-Pindoty 1/Calle Tambor</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>3</td>
+                    <td> 20/2024 - ALEJANDRO RAUL PEREZ HERAS</td>
+                    <td> 6.1 - 1-19/03/2025</td>
+                    <td> 22.276.182 </td>
+                    <td> 25/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        24/04/2025
+                                
+                        </span>
+                    </td>
+                    <td> Celso Martínez</td>
+                    
+                    <td> AMAMBAY-Pedro Juan Caballero-Yvype</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>4</td>
+                    <td> 20/2024 - ALEJANDRO RAUL PEREZ HERAS</td>
+                    <td> 1.2 - 1-14/04/2025</td>
+                    <td> 94.343.497 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Marcos Fleitas</td>
+                    
+                    <td> CAAGUAZU-Yhú-Sidepar 3000</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>5</td>
+                    <td> 20/2024 - ALEJANDRO RAUL PEREZ HERAS</td>
+                    <td> 1.1 - 1-05/03/2025</td>
+                    <td> 12.101.318 </td>
+                    <td> 05/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    04/04/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Marcos Fleitas</td>
+                    
+                    <td> CAAGUAZU-Yhú-Sidepar 3000</td>
+                    <td> Pozo Perforado Tipo A: Pozo con revestimiento total - Prof. Est.: 150 m - Diám.: 6&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>6</td>
+                    <td> 20/2024 - ALEJANDRO RAUL PEREZ HERAS</td>
+                    <td> 1.1 - 1-10/03/2025</td>
+                    <td> 12.101.318 </td>
+                    <td> 10/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    09/04/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Marcos Fleitas</td>
+                    
+                    <td> CAAGUAZU-Yhú-Yvypyta</td>
+                    <td> Pozo Perforado Tipo A: Pozo con revestimiento total - Prof. Est.: 150 m - Diám.: 6&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>7</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 6.1 - 1-06/03/2025</td>
+                    <td> 18.622.859 </td>
+                    <td> 06/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        05/04/2025
+                                
+                        </span>
+                    </td>
+                    <td> Lucila Peña</td>
+                    
+                    <td> PARAGUARI-Mbuyapey-Ñuai</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>8</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 3.2 - 1-28/04/2025</td>
+                    <td> 117.084.633 </td>
+                    <td> </td> 
+                    <td> 60</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Lucila Peña</td>
+                    
+                    <td> CAAZAPA-Fulgencio Yegros-Pindoyu/Yvyra Katu</td>
+                    <td> Tanque Elevado Metálico de 30 m3 - Tipo Copa</td>
+                </tr>
+                                            <tr>
+                    <td>9</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 5.1 - 1-28/04/2025</td>
+                    <td> 30.923.487 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Lucila Peña</td>
+                    
+                    <td> CAAZAPA-Fulgencio Yegros-Pindoyu/Yvyra Katu</td>
+                    <td> Extensión Eléctrica en Media Tensión MONOFÁSICA - PD: 15 kVA</td>
+                </tr>
+                                            <tr>
+                    <td>10</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 4.1 - 1-28/04/2025</td>
+                    <td> 16.087.924 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Lucila Peña</td>
+                    
+                    <td> CAAZAPA-Fulgencio Yegros-Pindoyu/Yvyra Katu</td>
+                    <td> Caseta Tipo S</td>
+                </tr>
+                                            <tr>
+                    <td>11</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 6.1 - 1-06/03/2025</td>
+                    <td> 18.622.859 </td>
+                    <td> 06/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        05/04/2025
+                                
+                        </span>
+                    </td>
+                    <td> Lucila Peña</td>
+                    
+                    <td> CAAZAPA-Fulgencio Yegros-Pindoyu/Yvyra Katu</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>12</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 7.1 - 1-28/04/2025</td>
+                    <td> 6.082.131 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Lucila Peña</td>
+                    
+                    <td> CAAZAPA-Fulgencio Yegros-Pindoyu/Yvyra Katu</td>
+                    <td> Cerco Perimetral Pozo</td>
+                </tr>
+                                            <tr>
+                    <td>13</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 1.1 - 1-04/03/2025</td>
+                    <td> 12.812.741 </td>
+                    <td> 04/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    03/04/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Roberto Fleitas</td>
+                    
+                    <td> CAAZAPA-Fulgencio Yegros-Pindoyu/Yvyra Katu</td>
+                    <td> Pozo Perforado Tipo A: Pozo con revestimiento total - Prof. Est.: 150 m - Diám.: 6&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>14</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 1.2 - 1-10/03/2025</td>
+                    <td> 12.812.741 </td>
+                    <td> </td> 
+                    <td> 15</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Roberto Fleitas</td>
+                    
+                    <td> CAAZAPA-San Juan Nepomuceno-San Juan Nepomuceno</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>15</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 1.2 - 1-22/04/2025</td>
+                    <td> 4.834.405 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Roberto Fleitas</td>
+                    
+                    <td> CAAZAPA-San Juan Nepomuceno-Santa Rosa/Pindo´i</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>16</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 1.2 - 1-17/02/2025</td>
+                    <td> 94.732.162 </td>
+                    <td> 17/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        19/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Roberto Fleitas</td>
+                    
+                    <td> SAN PEDRO-San Estanislao-Virgen de Fátima</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>17</td>
+                    <td> 15/2024 - ALFA Y OMEGA S.A</td>
+                    <td> 1.2 - 1-24/02/2025</td>
+                    <td> 94.732.162 </td>
+                    <td> 24/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        26/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Roberto Fleitas</td>
+                    
+                    <td> PARAGUARI-Ybytymí-Ybytymi</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>18</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 23.190.000 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Luis Torres</td>
+                    
+                    <td> ALTO PARANA-Itakyry-Acaray Poty</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>19</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 6.1 - 1-04/04/2025</td>
+                    <td> 23.190.000 </td>
+                    <td> 04/04/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    04/05/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Luis Torres</td>
+                    
+                    <td> CONCEPCIÓN-San Alfredo-Asentamiento 8 de Noviembre</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>20</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 23.190.000 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Luis Torres</td>
+                    
+                    <td> CAAGUAZU-Caaguazú-Guayaki Kuá</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>21</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 23.190.000 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Luis Torres</td>
+                    
+                    <td> ALTO PARANA-Itakyry-Tacuara</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>22</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 23.190.000 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Luis Torres</td>
+                    
+                    <td> ALTO PARANA-Itakyry-Vakareta</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>23</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 1.1 - 1-07/03/2025</td>
+                    <td> 16.678.000 </td>
+                    <td> 07/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    06/04/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Noemi Díaz</td>
+                    
+                    <td> ALTO PARANA-Itakyry-Acaray Poty</td>
+                    <td> Pozo Perforado Tipo A: Pozo con revestimiento total - Prof. Est.: 150 m - Diám.: 6&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>24</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 1.2 - 1-01/04/2025</td>
+                    <td> 12.295.000 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Noemi Díaz</td>
+                    
+                    <td> CAAGUAZU-Caaguazú-Guayaki Kuá</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>25</td>
+                    <td> 18/2024 - HIDROGEOM PERFORACIONES S.A.</td>
+                    <td> 1.1 - 1-20/02/2025</td>
+                    <td> 16.678.000 </td>
+                    <td> 20/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    22/03/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Noemi Díaz</td>
+                    
+                    <td> ALTO PARANA-Itakyry-Tacuara</td>
+                    <td> Pozo Perforado Tipo A: Pozo con revestimiento total - Prof. Est.: 150 m - Diám.: 6&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>26</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 1.2 - 1-14/02/2025</td>
+                    <td> 16.805.324 </td>
+                    <td> 14/02/2025</td> 
+                    <td> 15</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    01/03/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Blanca Ruiz Díaz</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-San Antonio</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>27</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 1.2 - 2-24/04/2025</td>
+                    <td> 35.484.374 </td>
+                    <td> </td> 
+                    <td> 1</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Blanca Ruiz Díaz</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-San Antonio</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>28</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 1.2 - 1-06/03/2025</td>
+                    <td> 4.404.200 </td>
+                    <td> 06/03/2025</td> 
+                    <td> 25</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    31/03/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Blanca Ruiz Díaz</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santa Catalina</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>29</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 1.2 - 2-24/04/2025</td>
+                    <td> 23.106.104 </td>
+                    <td> </td> 
+                    <td> 1</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Blanca Ruiz Díaz</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santa Catalina</td>
+                    <td> Pozo Perforado Tipo B: Pozo con pared desnuda - Prof. Est.: 200 m - Diám.: 6 1/2&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>30</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 1.1 - 2-04/03/2025</td>
+                    <td> 12.401.124 </td>
+                    <td> 04/03/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    03/04/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Blanca Ruiz Díaz</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santiago Cué</td>
+                    <td> Pozo Perforado Tipo A: Pozo con revestimiento total - Prof. Est.: 150 m - Diám.: 6&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>31</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 1.1 - 1-26/02/2025</td>
+                    <td> 4.404.200 </td>
+                    <td> 26/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    28/03/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Blanca Ruiz Díaz</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santiago Cué</td>
+                    <td> Pozo Perforado Tipo A: Pozo con revestimiento total - Prof. Est.: 150 m - Diám.: 6&quot; </td>
+                </tr>
+                                            <tr>
+                    <td>32</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 19.297.333 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-Alto Verá-Mboi Ka´e</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>33</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 19.297.333 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-San Antonio</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>34</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 19.297.333 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santa Catalina</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>35</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 4.1 - 1-22/04/2025</td>
+                    <td> 18.938.791 </td>
+                    <td> 30/04/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    30/05/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santiago Cué</td>
+                    <td> Caseta Tipo S</td>
+                </tr>
+                                            <tr>
+                    <td>36</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 3.1 - 1-23/04/2025</td>
+                    <td> 86.627.010 </td>
+                    <td> </td> 
+                    <td> 60</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santiago Cué</td>
+                    <td> Tanque Elevado Metálico de 15 m3 - Tipo Copa</td>
+                </tr>
+                                            <tr>
+                    <td>37</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 5.1 - 1-24/04/2025</td>
+                    <td> 37.940.176 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santiago Cué</td>
+                    <td> Extensión Eléctrica en Media Tensión MONOFÁSICA - PD: 15 kVA</td>
+                </tr>
+                                            <tr>
+                    <td>38</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 6.1 - 1-05/02/2025</td>
+                    <td> 19.297.333 </td>
+                    <td> 05/02/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        07/03/2025
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santiago Cué</td>
+                    <td> Aductora, Red de Distribución y Conexiones Domiciliarias</td>
+                </tr>
+                                            <tr>
+                    <td>39</td>
+                    <td> 22/2024 - JS INGENIERIA - JULIO CESAR SPIRIDONOFF SANCHEZ</td>
+                    <td> 7.1 - 1-24/04/2025</td>
+                    <td> 7.346.011 </td>
+                    <td> </td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                            >
+                                
+                                                                        
+                                        
+                                
+                        </span>
+                    </td>
+                    <td> Juan Huerta</td>
+                    
+                    <td> ITAPUA-San Pedro del Paraná-Santiago Cué</td>
+                    <td> Cerco Perimetral Pozo</td>
+                </tr>
+                                            <tr>
+                    <td>40</td>
+                    <td> 35/2024 - SOTEC S.A.</td>
+                    <td> 2.1 - 1-19/05/2025</td>
+                    <td> 4.965.257 </td>
+                    <td> 19/05/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    18/06/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Franciso Báez</td>
+                    
+                    <td> SAN PEDRO-San Estanislao-Virgen de Fátima</td>
+                    <td> Equip. Electrom. e Hidráulico de 3 HP - MONOFÁSICO</td>
+                </tr>
+                                            <tr>
+                    <td>41</td>
+                    <td> 35/2024 - SOTEC S.A.</td>
+                    <td> 2.2 - 1-22/05/2025</td>
+                    <td> 61.356.153 </td>
+                    <td> 22/05/2025</td> 
+                    <td> 30</td>
+                    <td>
+                        <span
+                             style="color: red; font-weight: bold;"                                 
+                            >
+                                
+                                                                    21/06/2025 PLAZO VENCIDO
+                                
+                        </span>
+                    </td>
+                    <td> Franciso Báez</td>
+                    
+                    <td> CAAGUAZU-Yhú-Yvypyta</td>
+                    <td> Equip. Electrom. e Hidráulico de 5,5 HP - MONOFÁSICO</td>
+                </tr>
+                    </tbody>
+    </table>
+</body>
+
+</html>

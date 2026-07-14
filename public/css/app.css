@@ -1,0 +1,43 @@
+/**********    BEGIN MENU    **********/
+#pcoded .pcoded-container .pcoded-header .navbar-wrapper .navbar-logo a {
+    font-size: 18px;
+}
+#pcoded .pcoded-container .navbar-container .user-profile .logout-button {
+    background-color: transparent; 
+    border: unset; 
+    padding: 0px; 
+    font-size: 15px; 
+    /* color: #333; */
+    color: red;
+    cursor: pointer;
+}
+/**********    END MENU    **********/
+
+/**********    BEGIN GENERAL STYLES    **********/
+.has-danger .select2-container--default .select2-selection--single {
+    border-color: #ff5370;
+}
+.has-danger .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #ff5370;
+}
+.datepicker table tr td, .datepicker table tr th {
+    font-size: 14px;
+}
+button i.fa {
+    margin-right: 0px;
+}
+.btn-sm { font-weight: bold; text-transform: uppercase; }
+.table.table-sm td, .table.table-sm th { padding: .75rem .5rem; }
+/**********    END GENERAL STYLES    **********/
+
+/**********    BEGIN ORDERS    **********/
+.orders .card .card-block p {
+    margin-bottom: 0.5rem;
+}
+
+/* Alternando colores en listados */
+.borde-alternado:nth-child(n+1) .update-icon{ border: 1px solid #ff5370; }
+.borde-alternado:nth-child(2n+1) .update-icon{ border: 1px solid #ffb64d; }
+.borde-alternado:nth-child(3n+1) .update-icon{ border: 1px solid #2ed8b6; }
+.borde-alternado:nth-child(4n+1) .update-icon{ border: 1px solid #4099ff; }
+/**********    END ORDERS    **********/
