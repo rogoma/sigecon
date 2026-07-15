@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -l resources/views/contract/itemsorders/index_itemsorders.blade.php)",
+      "Bash(php -l app/Http/Controllers/Contract/ItemsContractsController.php)",
+      "Bash(php -l /c/Proyecto/sigecon/resources/views/contract/itemsorders/index_itemsorders.blade.php)",
+      "Bash(php -l /c/Proyecto/sigecon/resources/views/contract/contracts/showcontra.blade.php)"
+    ]
+  }
+}

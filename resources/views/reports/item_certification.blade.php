@@ -4,9 +4,33 @@
     <title>Acta de Medición N° {{ $certification->number }}</title>
 </head>
 <style type="text/css">
+    @page {
+        margin: 110px 25px 50px 25px;
+    }
     body {
         font-family: arial, sans-serif;
         font-size: 10px;
+    }
+    header {
+        position: fixed;
+        top: -90px;
+        left: 0;
+        right: 0;
+        height: 90px;
+        text-align: center;
+        line-height: 1.5;
+        border-bottom: 1px solid #ddd;
+    }
+    footer {
+        position: fixed;
+        bottom: -40px;
+        left: 0;
+        right: 0;
+        height: 30px;
+        text-align: center;
+        font-size: 9px;
+        color: #777;
+        border-top: 1px solid #ddd;
     }
     table {
         border-collapse: collapse;
@@ -41,11 +65,25 @@
     }
 </style>
 <body>
-    <h2>ACTA DE MEDICIÓN</h2>
+    <header>
+        <img src="img/logoVI_2.png" alt="Logo" style="height: 65px;">
+    </header>
+
+    <footer>
+        Página <span class="page"></span> de <span class="topage"></span>
+    </footer>
+
+    <h2>MINISTERIO DE SALUD PÚBLICA Y BIENESTAR SOCIAL</h2>
+    <h2>SERVICIO NACIONAL DE SANEMIENTO AMBIENTAL (SENASA)</h2>
+    {{ $contract->description }}
+
     <h4>PLANILLA DE CERTIFICACIÓN N° {{ $certification->number }}</h4>
     <h4>CONTRATO N° {{ $contract->number_year }} - LOTE N° {{ $order->component->code }}</h4>
     <h4>EMPRESA CONSTRUCTORA: {{ $contract->provider->description }}</h4>
     <h4>PERIODO: {{ $certification->period }}</h4>
+    <BR></BR>
+    <h2>ACTA DE MEDICIÓN</h2>
+    <h2>PLANILLA N° {{ $certification->number }}-{{ $contract->provider->description }}</h2>
 
     <div class="datos-generales">
         <p>

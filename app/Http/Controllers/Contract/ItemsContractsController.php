@@ -126,7 +126,12 @@ class ItemsContractsController extends Controller
         // Próximo N° de Planilla de Certificación para esta orden
         $nextCertificationNumber = (int) ItemCertification::where('order_id', $order_id)->max('number') + 1;
 
-        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'nextCertificationNumber'));
+        // Actas de Medición ya generadas para esta orden, para listar los enlaces a sus PDFs
+        $certifications = ItemCertification::where('order_id', $order_id)
+            ->orderBy('number', 'desc')
+            ->get();
+
+        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'nextCertificationNumber', 'certifications'));
     }
 
     /**

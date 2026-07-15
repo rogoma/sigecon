@@ -37,7 +37,7 @@
     <div class="pcoded-content">
         <div class="page-header card">
             <div class="row align-items-end">
-                <div class="col-lg-8">
+                <div class="col-12 col-lg-8">
                     <div class="page-header-title">
                         <i class="fa fa-list bg-c-blue"></i>
                         <div class="d-inline">
@@ -56,7 +56,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
+                <div class="col-12 col-lg-4">
                     <div class="page-header-breadcrumb">
                         <ul class=" breadcrumb breadcrumb-title">
                             <li class="breadcrumb-item">
@@ -80,7 +80,7 @@
                                     <div class="card-header">
                                         <h4 style="color: blue;"> Orden N°: {{ $order->component->code }}-{{ $order->number }} - Localidad: {{ $order->locality->description }} - Componente: {{ $items0[0]->component->code }} - {{ $items0[0]->component->description }} </h4>
                                         <div class="form-group row">
-                                            <div class="col-sm-2">
+                                            <div class="col-12 col-sm-6 col-lg-3">
                                                 <label for="month_date" class="col-form-label" style="color: blue; font-size: 18px;">Mes/Año (mm/yyyy)</label>
                                                     <div class="input-group">
                                                         <input type="text" id="month_date" name="month_date"
@@ -97,7 +97,7 @@
                                                 @enderror
                                             </div>
 
-                                            <div class="col-sm-2">
+                                            <div class="col-12 col-sm-6 col-lg-3">
                                                 <label for="sign_date" class="col-form-label" style="color: blue; font-size: 18px;">Fecha de la Medición</label>
                                                     <div class="input-group">
                                                         <input type="text" id="sign_date" name="sign_date"
@@ -114,7 +114,7 @@
                                                     @enderror
                                                 </div>
 
-                                                <div class="col-sm-2">
+                                                <div class="col-12 col-sm-6 col-lg-3">
                                                         <label for="number" class="col-form-label" style="color: blue; font-size: 18px;">N° Planilla de Certificación</label>
                                                         <input type="text" id="number" name="number_display"
                                                             class="form-control" value="{{ $nextCertificationNumber }}" disabled>
@@ -124,6 +124,39 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    @if ($certifications->isNotEmpty())
+                                        <div class="card-block" style="padding-top: 0;">
+                                            <h5 style="color: blue;">Actas de Medición Generadas</h5>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>N° Planilla</th>
+                                                            <th>Período</th>
+                                                            <th>Fecha Medición</th>
+                                                            <th>PDF</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($certifications as $certification)
+                                                            <tr>
+                                                                <td>{{ $certification->number }}</td>
+                                                                <td>{{ $certification->period }}</td>
+                                                                <td>{{ $certification->signDateFormat() }}</td>
+                                                                <td>
+                                                                    <a href="{{ route('item_certifications.pdf', $certification->id) }}"
+                                                                        target="_blank" rel="noopener">
+                                                                        <i class="fa fa-file-pdf-o"></i> Ver Acta N° {{ $certification->number }}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    @endif
 
                                     <div class="card-block">
                                         <div class="dt-responsive table-responsive">
@@ -151,6 +184,7 @@
                                                         @php
                                                             $anterior = $anteriores[$item->rubro_id] ?? 0;
                                                         @endphp
+                                                        @continue ($item->rubro_id != '9999' && $anterior >= $item->quantity)
                                                         <tr>
                                                             @if ($item->rubro_id == '9999')
                                                                 <td class="item_number">{{ $item->item_number }}</td>
@@ -296,7 +330,8 @@
                 },
                 success: function(response) {
                     if (response.status === 'success') {
-                        window.location.href = response.redirect_url;
+                        window.open(response.redirect_url, '_blank');
+                        window.location.href = "{{ route('contracts.volver', $contract->id) }}";
                     } else {
                         swal("Error!", response.message, "error");
                     }

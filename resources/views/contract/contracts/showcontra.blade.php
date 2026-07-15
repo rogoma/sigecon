@@ -33,7 +33,7 @@
     <div class="pcoded-content">
         <div class="page-header card">
             <div class="row align-items-end">
-                <div class="col-lg-8">
+                <div class="col-12 col-lg-8">
                     <div class="page-header-title">
                         <i class="fa fa-list bg-c-blue"></i>
                         <div class="d-inline">
@@ -47,7 +47,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
+                <div class="col-12 col-lg-4">
                     <div class="page-header-breadcrumb">
                         <ul class=" breadcrumb breadcrumb-title">
                             <li class="breadcrumb-item">
@@ -71,19 +71,19 @@
                                 <div class="card">
                                     <div class="card-header">
                                         <div class="row">
-                                            <div class="col-sm-10 text-left">
+                                            <div class="col-12 col-md-8 text-left">
                                                 <h5>Llamado:
                                                     {{-- {{ $contract->description . ' - ' . $contract->modality->description . ' - Contrato N° ' . $contract->number_year . ' - ' . $contract->provider->description }} --}}
                                                     {{ $contract->description }} - {{ $contract->modality->description }} - Contrato N° {{ $contract->number_year }}
                                                 </h5>
                                                 <h5 style="color: red; background-color: yellow;"> Contratista: {{ $contract->provider->description }}</h5>
                                             </div>
-                                            <div class="col-sm-10 text-left">
+                                            <div class="col-12 col-md-8 text-left">
                                                 <h5 style="font-size: 17px; font-weight: bold; color:blue">Dependencia
                                                     Responsable: {{ $contract->dependency->description }}</h5>
                                             </div>
 
-                                            <div class="col-sm-2">
+                                            <div class="col-12 col-md-4 mt-2 mt-md-0">
                                                 @if (Auth::user()->hasPermission(['admin.contracts.update']))
                                                     {{-- @if (in_array($contract->contract_state_id, [1, 2])) --}}
                                                     <button class="btn btn-primary dropdown-toggle waves-effect"
