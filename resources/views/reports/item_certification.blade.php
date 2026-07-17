@@ -75,15 +75,15 @@
 
     <h2>MINISTERIO DE SALUD PÚBLICA Y BIENESTAR SOCIAL</h2>
     <h2>SERVICIO NACIONAL DE SANEMIENTO AMBIENTAL (SENASA)</h2>
-    {{ $contract->description }}
-
+    {{ $contract->description }}    
+    <h4>LOTE N° {{ $order->component->code }}</h4>
+    <h4>CONTRATO N° {{ $contract->number_year }} - EMPRESA CONSTRUCTORA: {{ $contract->provider->description }}</h4>
+    {{-- <h4>EMPRESA CONSTRUCTORA: {{ $contract->provider->description }}</h4> --}}
     <h4>PLANILLA DE CERTIFICACIÓN N° {{ $certification->number }}</h4>
-    <h4>CONTRATO N° {{ $contract->number_year }} - LOTE N° {{ $order->component->code }}</h4>
-    <h4>EMPRESA CONSTRUCTORA: {{ $contract->provider->description }}</h4>
     <h4>PERIODO: {{ $certification->period }}</h4>
     <BR></BR>
-    <h2>ACTA DE MEDICIÓN</h2>
-    <h2>PLANILLA N° {{ $certification->number }}-{{ $order->component->componentType->description }}</h2>
+    <h4 style="text-align: left;">ACTA DE MEDICIÓN</h4>
+<h4 style="text-align: left;">PLANILLA N° {{ $certification->number }}-{{ $order->component->componentType->description }}</h4>
 
     <div class="datos-generales">
         <p>
@@ -92,14 +92,14 @@
             Departamento: <strong>{{ $order->locality->district->department->description }}</strong>,
             a los {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }},
             en presencia de
-            @if ($contract->fiscal1)
-                {{ $contract->fiscal1->name }} {{ $contract->fiscal1->lastname }}
+            @if ($order->creatorUser)
+                {{ $order->creatorUser->name }} {{ $order->creatorUser->lastname }}
             @else
                 (sin fiscal asignado)
             @endif
             representante de la fiscalización y
-            @if ($contract->contratista)
-                {{ $contract->contratista->name }} {{ $contract->contratista->lastname }}
+            @if ($certification->contratista_representative)
+                {{ $certification->contratista_representative }}
             @else
                 (sin representante asignado)
             @endif
@@ -112,7 +112,8 @@
             <tr>
                 <th rowspan="2">N°</th>
                 <th rowspan="2">Descripción</th>
-                <th rowspan="2">Cant.</th>
+                <th rowspan="2">Cant. Contract.</th>
+                <th rowspan="2">Cant. a Ejecutar</th>
                 <th rowspan="2">Unid.</th>
                 <th colspan="2">Anterior</th>
                 <th colspan="2">Actual</th>
@@ -132,7 +133,7 @@
                 @if ($item->rubro_id == 9999)
                     <tr class="rubro-section">
                         <td>{{ $item->item_number }}</td>
-                        <td colspan="8">{{ $item->subitem->description }}</td>
+                        <td colspan="9">{{ $item->subitem->description }}</td>
                     </tr>
                 @else
                     @php
@@ -142,13 +143,14 @@
                         $actual = $medidoEnEstaActa ? ($actuales[$item->rubro_id] ?? 0) : 0;
                         $acumulado = $anterior + $actual;
                         $cantidadOrdenBase = $cantidadesOrden[$item->rubro_id] ?? 0;
-                        // Cant. sólo se muestra si el rubro fue medido en esta acta y tiene saldo asignado en la orden; caso contrario, 0
+                        // Cant. a Ejecutar sólo se muestra si el rubro fue medido en esta acta y tiene saldo asignado en la orden; caso contrario, 0
                         $cantidadOrden = ($medidoEnEstaActa && $cantidadOrdenBase > 0) ? $cantidadOrdenBase : 0;
                         $excedeSaldo = $acumulado > $cantidadOrden;
                     @endphp
                     <tr>
                         <td style="text-align: center;">{{ $item->item_number }}</td>
                         <td>{{ $item->rubro->description }}</td>
+                        <td style="text-align: center;">{{ number_format($item->quantity, 2, ',', '.') }}</td>
                         <td style="text-align: center;">{{ number_format($cantidadOrden, 2, ',', '.') }}</td>
                         <td style="text-align: center;">{{ $item->rubro->orderPresentations->description }}</td>
                         <td style="text-align: right;">{{ $anterior > 0 ? number_format($anterior, 2, ',', '.') : '-' }}</td>

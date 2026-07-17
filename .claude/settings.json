@@ -4,7 +4,14 @@
       "Bash(php -l resources/views/contract/itemsorders/index_itemsorders.blade.php)",
       "Bash(php -l app/Http/Controllers/Contract/ItemsContractsController.php)",
       "Bash(php -l /c/Proyecto/sigecon/resources/views/contract/itemsorders/index_itemsorders.blade.php)",
-      "Bash(php -l /c/Proyecto/sigecon/resources/views/contract/contracts/showcontra.blade.php)"
+      "Bash(php -l /c/Proyecto/sigecon/resources/views/contract/contracts/showcontra.blade.php)",
+      "Bash(php -l /c/Proyecto/sigecon/resources/views/reports/item_certification.blade.php)",
+      "Bash(php -l /c/Proyecto/sigecon/app/Http/Controllers/Contract/ItemsContractsController.php)",
+      "Bash(php -v)",
+      "Bash(php artisan *)",
+      "Bash(php -l /c/Proyecto/sigecon/database/migrations/2026_07_17_111809_add_state_and_representative_to_item_certifications_table.php)",
+      "Bash(php -l /c/Proyecto/sigecon/app/Models/ItemCertification.php)",
+      "Bash(php -l /c/Proyecto/sigecon/routes/web.php)"
     ]
   }
 }

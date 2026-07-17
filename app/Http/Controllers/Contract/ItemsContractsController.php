@@ -123,7 +123,10 @@ class ItemsContractsController extends Controller
             ->groupBy('rubro_id')
             ->pluck('total', 'rubro_id');
 
-        // Próximo N° de Planilla de Certificación para esta orden
+        // Cantidad Contratada por rubro (Cant. Contract.), para mostrar junto a la Cant. a Ejecutar de la orden
+        $cantidadesContrato = $items0->pluck('quantity', 'rubro_id');
+
+        // Próximo N° de Planilla de Certificación para esta orden (se sugiere como valor por defecto; el usuario puede editarlo)
         $nextCertificationNumber = (int) ItemCertification::where('order_id', $order_id)->max('number') + 1;
 
         // Actas de Medición ya generadas para esta orden, para listar los enlaces a sus PDFs
@@ -131,7 +134,7 @@ class ItemsContractsController extends Controller
             ->orderBy('number', 'asc')
             ->get();
 
-        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'nextCertificationNumber', 'certifications'));
+        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'cantidadesContrato', 'nextCertificationNumber', 'certifications'));
     }
 
     /**
@@ -151,13 +154,26 @@ class ItemsContractsController extends Controller
         }
 
         $rules = [
+            'number' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::unique('item_certifications', 'number')->where(function ($q) use ($order_id) {
+                    return $q->where('order_id', $order_id);
+                }),
+            ],
             'month_date' => 'required|string',
             'sign_date' => 'required|date_format:d/m/Y',
+            'contratista_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
             'items.*.quantity' => 'required|numeric|min:0',
         ];
-        $validator = Validator::make($request->all(), $rules);
+        $messages = [
+            'number.unique' => 'Ya existe una Acta de Medición con ese N° de Planilla para esta orden.',
+            'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+        ];
+        $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
             return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 200], 200);
         }
@@ -171,14 +187,16 @@ class ItemsContractsController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Debe ingresar al menos una cantidad medida mayor a 0.', 'code' => 200], 200);
         }
 
-        $nextNumber = (int) ItemCertification::where('order_id', $order_id)->max('number') + 1;
+        $number = (int) $request->input('number');
 
         $certification = ItemCertification::create([
             'order_id' => $order_id,
-            'number' => $nextNumber,
+            'number' => $number,
             'period' => $request->input('month_date'),
             'sign_date' => \Carbon\Carbon::createFromFormat('d/m/Y', $request->input('sign_date'))->format('Y-m-d'),
             'creator_user_id' => $request->user()->id,
+            'state_id' => ItemCertification::STATE_EMITIDO,
+            'contratista_representative' => $request->input('contratista_representative'),
         ]);
 
         foreach ($items as $item) {
@@ -191,7 +209,142 @@ class ItemsContractsController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Acta de Medición N° ' . $nextNumber . ' generada correctamente.',
+            'message' => 'Acta de Medición N° ' . $number . ' generada correctamente.',
+            'redirect_url' => route('item_certifications.pdf', $certification->id),
+        ]);
+    }
+
+    /**
+     * Devuelve los datos de una Acta de Medición (encabezado + rubros medidos) para precargar el modal de edición.
+     * Solo se permite editar actas en estado Emitido (1).
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function editCerti(Request $request, $certification_id)
+    {
+        $certification = ItemCertification::with('details')->findOrFail($certification_id);
+        $order = $certification->order;
+
+        if (!$request->user()->hasPermission(['admin.items.index', 'contracts.items.index', 'contracts.items.show'])
+            && $request->user()->role_id != 4
+            && $order->contract->dependency_id != $request->user()->dependency_id) {
+            return response()->json(['status' => 'error', 'message' => 'No posee los suficientes permisos para realizar esta acción.', 'code' => 200], 200);
+        }
+
+        if ($certification->state_id != ItemCertification::STATE_EMITIDO) {
+            return response()->json(['status' => 'error', 'message' => 'Esta Acta de Medición no se encuentra en estado Emitido y no puede editarse.', 'code' => 200], 200);
+        }
+
+        $rubroIds = $certification->details->pluck('rubro_id');
+
+        // Rubros medidos en esta acta, con su descripción/unidad y las cantidades de Contrato y de la Orden para referencia
+        $itemsContract = ItemContract::whereIn('rubro_id', $rubroIds)
+            ->where('contract_id', $order->contract_id)
+            ->where('component_id', $order->component_id)
+            ->with('rubro.orderPresentations')
+            ->get()
+            ->keyBy('rubro_id');
+
+        $cantidadesOrden = ItemOrder::where('order_id', $order->id)->pluck('quantity', 'rubro_id');
+
+        $rubros = $certification->details->map(function ($detail) use ($itemsContract, $cantidadesOrden) {
+            $itemContract = $itemsContract->get($detail->rubro_id);
+            return [
+                'rubro_id' => $detail->rubro_id,
+                'descripcion' => $itemContract ? $itemContract->rubro->code . '-' . $itemContract->rubro->description : $detail->rubro_id,
+                'unidad' => $itemContract && $itemContract->rubro->orderPresentations ? $itemContract->rubro->orderPresentations->description : '',
+                'cantidad_contrato' => $itemContract ? $itemContract->quantity : 0,
+                'cantidad_ejecutar' => $cantidadesOrden[$detail->rubro_id] ?? 0,
+                'quantity' => $detail->quantity,
+            ];
+        })->values();
+
+        return response()->json([
+            'status' => 'success',
+            'certification' => [
+                'id' => $certification->id,
+                'number' => $certification->number,
+                'period' => $certification->period,
+                'sign_date' => \Carbon\Carbon::parse($certification->sign_date)->format('d/m/Y'),
+                'contratista_representative' => $certification->contratista_representative,
+            ],
+            'rubros' => $rubros,
+        ]);
+    }
+
+    /**
+     * Actualiza una Acta de Medición existente. Solo permitido mientras esté en estado Emitido (1).
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updateCerti(Request $request, $certification_id)
+    {
+        $certification = ItemCertification::findOrFail($certification_id);
+        $order = $certification->order;
+
+        if (!$request->user()->hasPermission(['admin.items.update', 'contracts.items.update'])
+            && $request->user()->role_id != 4
+            && $order->contract->dependency_id != $request->user()->dependency_id) {
+            return response()->json(['status' => 'error', 'message' => 'No posee los suficientes permisos para realizar esta acción.', 'code' => 200], 200);
+        }
+
+        if ($certification->state_id != ItemCertification::STATE_EMITIDO) {
+            return response()->json(['status' => 'error', 'message' => 'Esta Acta de Medición no se encuentra en estado Emitido y no puede editarse.', 'code' => 200], 200);
+        }
+
+        $rules = [
+            'number' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::unique('item_certifications', 'number')->where(function ($q) use ($order) {
+                    return $q->where('order_id', $order->id);
+                })->ignore($certification->id),
+            ],
+            'month_date' => 'required|string',
+            'sign_date' => 'required|date_format:d/m/Y',
+            'contratista_representative' => 'required|string|max:150',
+            'items' => 'required|array|min:1',
+            'items.*.rubro_id' => 'required|integer',
+            'items.*.quantity' => 'required|numeric|min:0',
+        ];
+        $messages = [
+            'number.unique' => 'Ya existe otra Acta de Medición con ese N° de Planilla para esta orden.',
+            'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+        ];
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 200], 200);
+        }
+
+        $items = collect($request->input('items'))->filter(function ($item) {
+            return (float) $item['quantity'] > 0;
+        });
+
+        if ($items->isEmpty()) {
+            return response()->json(['status' => 'error', 'message' => 'Debe ingresar al menos una cantidad medida mayor a 0.', 'code' => 200], 200);
+        }
+
+        $certification->update([
+            'number' => (int) $request->input('number'),
+            'period' => $request->input('month_date'),
+            'sign_date' => \Carbon\Carbon::createFromFormat('d/m/Y', $request->input('sign_date'))->format('Y-m-d'),
+            'contratista_representative' => $request->input('contratista_representative'),
+        ]);
+
+        // Reemplazamos el detalle de rubros medidos por el nuevo detalle enviado
+        $certification->details()->delete();
+        foreach ($items as $item) {
+            ItemCertificationDetail::create([
+                'item_certification_id' => $certification->id,
+                'rubro_id' => $item['rubro_id'],
+                'quantity' => $item['quantity'],
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Acta de Medición N° ' . $certification->number . ' actualizada correctamente.',
             'redirect_url' => route('item_certifications.pdf', $certification->id),
         ]);
     }
@@ -203,7 +356,7 @@ class ItemsContractsController extends Controller
      */
     public function certificationPdf(Request $request, $certification_id)
     {
-        $certification = ItemCertification::with(['order.contract.provider', 'order.locality.district.department', 'order.contract.fiscal1', 'order.contract.contratista', 'order.component.componentType'])
+        $certification = ItemCertification::with(['order.contract.provider', 'order.locality.district.department', 'order.creatorUser', 'order.contract.fiscal1', 'order.contract.contratista', 'order.component.componentType'])
             ->findOrFail($certification_id);
 
         // Chequeamos permisos del usuario: acceso vía permiso, vía rol Contratista (role_id 4, no maneja permisos) o por dependencia dueña del contrato

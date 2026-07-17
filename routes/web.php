@@ -231,6 +231,8 @@ Route::get('contracts/getNotifications', [ContractsController::class, 'getNotifi
     Route::get('/orders/{order}/items_contracts/{contract}/component/{component}/itemsCerti', [ItemsContractsController::class, 'indexCerti']);
     Route::post('/orders/{order}/item_certifications', [ItemsContractsController::class, 'storeCerti'])->name('item_certifications.store');
     Route::get('/item_certifications/{certification}/pdf', [ItemsContractsController::class, 'certificationPdf'])->name('item_certifications.pdf');
+    Route::get('/item_certifications/{certification}/edit', [ItemsContractsController::class, 'editCerti'])->name('item_certifications.edit');
+    Route::put('/item_certifications/{certification}', [ItemsContractsController::class, 'updateCerti'])->name('item_certifications.update');
 
     
 
