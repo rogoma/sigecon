@@ -397,6 +397,23 @@
             #saveButton {
                 width: 100%;
             }
+
+            .rubro-desc {
+                max-width: 140px;
+            }
+
+            .saldo-wrap {
+                min-width: 90px;
+            }
+
+            .saldo-text,
+            .saldo-excede {
+                font-size: 10px;
+            }
+
+            .medido-input {
+                width: 70px;
+            }
         }
     </style>
 @endpush
@@ -522,7 +539,7 @@
                                                         <td class="text-right">
                                                             <a href="{{ route('item_certifications.pdf', $certification->id) }}"
                                                                 target="_blank" rel="noopener" class="acta-pdf-link">
-                                                                <i class="fa-solid fa-file-pdf"></i> Ver Acta N° {{ $certification->number }}
+                                                                <i class="fa-solid fa-file-pdf"></i> Ver PDF
                                                             </a>
                                                         </td>
                                                     </tr>
@@ -550,21 +567,16 @@
                                     <table id="items" class="display" style="width:100%">
                                         <thead>
                                             <tr>
-                                                <th rowspan="2">#Item</th>
-                                                <th rowspan="2">Descripción</th>
-                                                <th rowspan="2">Unid. Med.</th>
-                                                <th rowspan="2">Cant. Orden</th>
-                                                <th rowspan="2">Saldo</th>
-                                                <th colspan="2" class="grupo-cantidades">Anterior</th>
+                                                <th>#Item</th>
+                                                <th>Descripción</th>
+                                                <th>Unid. Med.</th>
+                                                <th>Cant. Orden</th>
+                                                <th>Saldo</th>
+                                                <th class="grupo-cantidades">Ant. mdo</th>
+                                                <th class="grupo-cantidades">Ant. mat</th>
                                                 <th class="grupo-cantidades">Actual</th>
-                                                <th colspan="2" class="grupo-cantidades">Acumulado</th>
-                                            </tr>
-                                            <tr>
-                                                <th>mdo</th>
-                                                <th>mat</th>
-                                                <th>mdo/mat</th>
-                                                <th>mdo</th>
-                                                <th>mat</th>
+                                                <th class="grupo-cantidades">Acum. mdo</th>
+                                                <th class="grupo-cantidades">Acum. mat</th>
                                             </tr>
                                         </thead>
                                         <tbody>

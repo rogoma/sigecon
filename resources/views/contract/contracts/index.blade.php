@@ -165,6 +165,13 @@
             .contracts-index-page .acta-chips {
                 justify-content: center;
             }
+
+            /* En mobile, el mínimo de 260px para "Llamado" no deja lugar a que ninguna otra columna
+               (ni siquiera Acciones) quepa junto a ella; se reduce para que el listado siga siendo útil */
+            .contracts-index-page #contracts th:nth-child(3),
+            .contracts-index-page #contracts td:nth-child(3) {
+                min-width: 140px;
+            }
         }
     </style>
 @endpush
@@ -336,7 +343,14 @@
                         // Puedes personalizar el contenido de la columna aquí
                         return '<a href="' + data + '" target="_blank" style="color:blue">Link DNCP</a>'; // Suponiendo que el campo a enlazar está en el índice 2
                         }
-                    }
+                    },
+                    // Prioridad de columnas al colapsar en pantallas angostas: las más relevantes se mantienen visibles
+                    { "responsivePriority": 1, "targets": 12 },  // Acciones
+                    { "responsivePriority": 2, "targets": 2 },   // Llamado
+                    { "responsivePriority": 3, "targets": 10 },  // Estado
+                    { "responsivePriority": 4, "targets": 9 },   // Contratista
+                    { "responsivePriority": 5, "targets": 8 },   // Monto
+                    { "responsivePriority": 10, "targets": [0, 1, 3, 4, 5, 6, 7, 11] },
                 ]
             });
         });

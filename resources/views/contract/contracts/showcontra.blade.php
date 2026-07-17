@@ -604,7 +604,7 @@
                                                     <td class="text-right">
                                                         <a href="{{ route('item_certifications.pdf', $certification->id) }}"
                                                             target="_blank" rel="noopener" class="acta-pdf-link">
-                                                            <i class="fa-solid fa-file-pdf"></i> Ver Acta N° {{ $certification->number }}
+                                                            <i class="fa-solid fa-file-pdf"></i> Ver PDF
                                                         </a>
                                                     </td>
                                                 </tr>
@@ -639,6 +639,14 @@
                     "zeroRecords": "No se encontraron órdenes",
                     "paginate": { "previous": "Anterior", "next": "Siguiente" }
                 },
+                "columnDefs": [
+                    // Prioridad de columnas al colapsar en pantallas angostas: N° OE y Acciones se mantienen visibles
+                    { "responsivePriority": 1, "targets": 9 },  // Acciones
+                    { "responsivePriority": 2, "targets": 0 },  // N° OE
+                    { "responsivePriority": 3, "targets": 5 },  // Sub-Componente
+                    { "responsivePriority": 4, "targets": 2 },  // Monto Orden
+                    { "responsivePriority": 10, "targets": [1, 3, 4, 6, 7, 8] },
+                ],
             });
 
 
