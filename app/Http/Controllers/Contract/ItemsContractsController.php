@@ -203,7 +203,7 @@ class ItemsContractsController extends Controller
      */
     public function certificationPdf(Request $request, $certification_id)
     {
-        $certification = ItemCertification::with(['order.contract.provider', 'order.locality.district.department', 'order.contract.fiscal1', 'order.contract.contratista', 'order.component'])
+        $certification = ItemCertification::with(['order.contract.provider', 'order.locality.district.department', 'order.contract.fiscal1', 'order.contract.contratista', 'order.component.componentType'])
             ->findOrFail($certification_id);
 
         // Chequeamos permisos del usuario: acceso vía permiso, vía rol Contratista (role_id 4, no maneja permisos) o por dependencia dueña del contrato

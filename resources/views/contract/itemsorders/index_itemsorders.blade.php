@@ -675,8 +675,11 @@
                 const bar = row.find('.bar-actual');
                 bar.css('width', pctActual + '%');
                 bar.removeClass('warn danger');
-                if (pctTotal >= 100) bar.addClass('danger');
-                else if (pctTotal >= 60) bar.addClass('warn');
+                // Si lo medido coincide exactamente con la Cant. Orden, se deja en verde (color por defecto)
+                if (Math.abs(actual - quantity) > 0.001) {
+                    if (pctTotal > 100) bar.addClass('danger');
+                    else if (pctTotal >= 60) bar.addClass('warn');
+                }
 
                 const saldoRestante = quantity - acumulado;
                 row.find('.saldo-text').toggle(!excede);
@@ -783,32 +786,46 @@
                     return;
                 }
 
-                $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin mr-1"></i> Guardando...');
+                swal({
+                        title: "Atención",
+                        text: "¿Está seguro que desea grabar esta Acta de Medición? Una vez grabada no podrá modificarla.",
+                        type: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#DD6B55",
+                        confirmButtonText: "Sí, grabar",
+                        cancelButtonText: "Cancelar",
+                    },
+                    function(isConfirm) {
+                        if (!isConfirm) return;
 
-                $.ajax({
-                    url: '/orders/' + orderId + '/item_certifications',
-                    type: 'POST',
-                    data: {
-                        items: items,
-                        month_date: monthDate,
-                        sign_date: signDate,
-                        _token: $('meta[name="csrf-token"]').attr('content'),
-                    },
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            window.open(response.redirect_url, '_blank');
-                            window.location.href = "{{ route('contracts.volver', $contract->id) }}";
-                        } else {
-                            swal("Error!", response.message, "error");
-                            $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Grabar Medición');
-                        }
-                    },
-                    error: function(xhr) {
-                        swal("Error!", "Ocurrió un error intentando grabar la medición, por favor verifique los datos e intente nuevamente.", "error");
-                        console.error(xhr.responseText);
-                        $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Grabar Medición');
-                    },
-                });
+                        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin mr-1"></i> Guardando...');
+
+                        $.ajax({
+                            url: '/orders/' + orderId + '/item_certifications',
+                            type: 'POST',
+                            data: {
+                                items: items,
+                                month_date: monthDate,
+                                sign_date: signDate,
+                                _token: $('meta[name="csrf-token"]').attr('content'),
+                            },
+                            success: function(response) {
+                                if (response.status === 'success') {
+                                    window.open(response.redirect_url, '_blank');
+                                    window.location.href = "{{ route('contracts.volver', $contract->id) }}";
+                                } else {
+                                    swal("Error!", response.message, "error");
+                                    $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Grabar Medición');
+                                }
+                            },
+                            error: function(xhr) {
+                                swal("Error!", "Ocurrió un error intentando grabar la medición, por favor verifique los datos e intente nuevamente.", "error");
+                                console.error(xhr.responseText);
+                                $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Grabar Medición');
+                            },
+                        });
+                    }
+                );
             });
         });
     </script>

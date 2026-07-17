@@ -21,4 +21,11 @@ class Component extends Model
     public function itemsContract(){
         return $this->hasMany('App\Models\ItemContract');
     }
+
+    /**
+     * Para obtener el vinculo con la tabla component_types
+     */
+    public function componentType(){
+        return $this->belongsTo('App\Models\ComponentType', 'comp_type_id');
+    }
 }

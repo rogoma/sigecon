@@ -83,7 +83,7 @@
     <h4>PERIODO: {{ $certification->period }}</h4>
     <BR></BR>
     <h2>ACTA DE MEDICIÓN</h2>
-    <h2>PLANILLA N° {{ $certification->number }}-{{ $contract->provider->description }}</h2>
+    <h2>PLANILLA N° {{ $certification->number }}-{{ $order->component->componentType->description }}</h2>
 
     <div class="datos-generales">
         <p>
