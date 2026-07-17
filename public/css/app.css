@@ -13,6 +13,48 @@
 }
 /**********    END MENU    **********/
 
+/**********    BEGIN SIDEBAR THEME (mismo degradé azul que las vistas rediseñadas)    **********/
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-inner-navbar,
+.pcoded-navbar[navbar-theme="theme1"] .nav-user {
+    background: linear-gradient(180deg, #2f6f97 0%, #204d69 100%) !important;
+}
+
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-navigation-label {
+    color: rgba(255, 255, 255, .55) !important;
+}
+
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li > a,
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li > a .pcoded-micon {
+    color: rgba(255, 255, 255, .85) !important;
+}
+
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li > a:hover,
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li.active > a,
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li.pcoded-trigger > a {
+    background: rgba(255, 255, 255, .14) !important;
+    color: #fff !important;
+}
+
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li > a:hover .pcoded-micon,
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li.active > a .pcoded-micon,
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-item > li.pcoded-trigger > a .pcoded-micon {
+    color: #fff !important;
+}
+
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-submenu {
+    background: rgba(0, 0, 0, .15) !important;
+}
+
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-submenu li > a {
+    color: rgba(255, 255, 255, .75) !important;
+}
+
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-submenu li.active > a,
+.pcoded-navbar[navbar-theme="theme1"] .pcoded-submenu li > a:hover {
+    color: #fff !important;
+}
+/**********    END SIDEBAR THEME    **********/
+
 /**********    BEGIN GENERAL STYLES    **********/
 .has-danger .select2-container--default .select2-selection--single {
     border-color: #ff5370;

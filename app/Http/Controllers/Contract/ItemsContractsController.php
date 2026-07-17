@@ -128,7 +128,7 @@ class ItemsContractsController extends Controller
 
         // Actas de Medición ya generadas para esta orden, para listar los enlaces a sus PDFs
         $certifications = ItemCertification::where('order_id', $order_id)
-            ->orderBy('number', 'desc')
+            ->orderBy('number', 'asc')
             ->get();
 
         return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'nextCertificationNumber', 'certifications'));
@@ -227,14 +227,18 @@ class ItemsContractsController extends Controller
         // Cantidad Actual (esta acta) por rubro
         $actuales = $certification->details->pluck('quantity', 'rubro_id');
 
-        // Rubros del componente/contrato, para listar la descripción, unidad y cantidad contratada
+        // Rubros del componente/contrato, para listar la descripción y unidad
         $rubros = ItemContract::where('contract_id', $contract->id)
             ->where('component_id', $order->component_id)
             ->orderBy('id')
             ->get();
 
+        // Cantidad solicitada por rubro EN ESTA ORDEN DE EJECUCIÓN (no la cantidad total del contrato); 0 si el rubro no fue solicitado en la orden
+        $cantidadesOrden = ItemOrder::where('order_id', $order->id)
+            ->pluck('quantity', 'rubro_id');
+
         $pdf = App::make('dompdf.wrapper');
-        $view = View::make('reports.item_certification', compact('certification', 'order', 'contract', 'anteriores', 'actuales', 'rubros'))->render();
+        $view = View::make('reports.item_certification', compact('certification', 'order', 'contract', 'anteriores', 'actuales', 'rubros', 'cantidadesOrden'))->render();
         $pdf->loadHTML($view);
         return $pdf->stream('Acta_Certificacion_N' . $certification->number . '.pdf');
     }

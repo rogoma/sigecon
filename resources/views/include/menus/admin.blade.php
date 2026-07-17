@@ -1,7 +1,7 @@
 <div class="pcoded-main-container">
     <div class="pcoded-wrapper">
 
-        <nav class="pcoded-navbar">
+        <nav class="pcoded-navbar" navbar-theme="theme1">
             <div class="nav-list">
                 <div class="pcoded-inner-navbar main-menu">
                     <div class="pcoded-navigation-label">Navegación</div>
@@ -10,9 +10,6 @@
                             <a href="{{ route('home') }}" class="waves-effect waves-dark">
                                 <span class="pcoded-micon"><i class="fa-solid fa-shield"></i></span>
                                 <span class="pcoded-mtext">Inicio</span>
-                                {{-- <a href="/pdf/secuencia" class="btn btn-info" target="_blank">Flujo-Licitaciones</a>
-                                <a href="/pdf/secuencia2" class="btn btn-info" target="_blank">Flujo-Compras Menores</a>
-                                <a href="/pdf/secuencia3" class="btn btn-info" target="_blank">Flujo-Procesos Compl.</a>                                  --}}
                             </a>
                             <a href="/pdf/change_pass" class="btn btn-primary" target="_blank">
                                 <span class="pcoded-micon"><i class="fa-solid fa-key"></i></span>
@@ -24,7 +21,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-list"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-list"></i></span>
                             <span class="pcoded-mtext">Pedidos</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -45,7 +42,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Planificación</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -61,7 +58,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Licitaciones</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -77,7 +74,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Compras Menores</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -93,7 +90,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Proc.Complem.yExcepciones</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -109,7 +106,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Adjudicaciones</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -125,7 +122,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Contratos y Garantías</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -147,7 +144,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Gestión Documental</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -164,7 +161,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-clone"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-clone"></i></span>
                             <span class="pcoded-mtext">Comité Evaluador</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -180,7 +177,7 @@
                     <ul class="pcoded-item pcoded-left-item">
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-users"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-users"></i></span>
                             <span class="pcoded-mtext">Admin. Usuarios</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -208,7 +205,7 @@
                         </li>
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-sitemap"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-sitemap"></i></span>
                             <span class="pcoded-mtext">Dependencias</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -231,7 +228,7 @@
                         </li>
                         {{-- <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-bookmark"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-bookmark"></i></span>
                             <span class="pcoded-mtext">Pedidos</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -269,7 +266,7 @@
                         </li> --}}
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-credit-card"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-credit-card"></i></span>
                             <span class="pcoded-mtext">Estruct. Presupuestaria</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -317,10 +314,10 @@
                         </li>
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-map"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-map"></i></span>
                             <span class="pcoded-mtext">División Política</span>
                             </a>
-                            <ul class="pcoded-submenu">                                
+                            <ul class="pcoded-submenu">
                                 <li class="@if(Route::currentRouteName() == 'regiones.index') active @endif">
                                     <a href="{{ route('regiones.index') }}" class="waves-effect waves-dark">
                                     <span class="pcoded-mtext">Regiones</span>
@@ -345,7 +342,7 @@
                         </li>
                         <li class="pcoded-hasmenu">
                             <a href="javascript:void(0)" class="waves-effect waves-dark">
-                            <span class="pcoded-micon"><i class="fa fa-folder-open"></i></span>
+                            <span class="pcoded-micon"><i class="fa-solid fa-folder-open"></i></span>
                             <span class="pcoded-mtext">Admin. Contratos</span>
                             </a>
                             <ul class="pcoded-submenu">
@@ -371,7 +368,7 @@
                                 </li>
                                 <li class="@if(Route::currentRouteName() == 'providers.index') active @endif">
                                     <a href=" {{ route('providers.index') }} " class="waves-effect waves-dark">
-                                    <span class="pcoded-micon"><i class="fa fa-suitcase"></i></span>
+                                    <span class="pcoded-micon"><i class="fa-solid fa-suitcase"></i></span>
                                     <span class="pcoded-mtext">Contratistas</span>
                                     </a>
                                 </li>

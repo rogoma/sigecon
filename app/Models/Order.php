@@ -47,6 +47,13 @@ class Order extends Model
         return $this->hasMany('App\Models\ItemOrder');
     }
 
+    /**
+     * Para obtener el vinculo con la tabla item_certifications (Actas de Medición)
+     */
+    public function certifications(){
+        return $this->hasMany('App\Models\ItemCertification');
+    }
+
 
     /**
     * Para obtener el vinculo con la tabla events

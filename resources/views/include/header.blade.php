@@ -1,4 +1,4 @@
-<div id="pcoded" class="pcoded">
+<div id="pcoded" class="pcoded" theme-layout="vertical">
     <div class="pcoded-overlay-box"></div>
     <div class="pcoded-container navbar-wrapper">
         <nav class="navbar header-navbar pcoded-header">

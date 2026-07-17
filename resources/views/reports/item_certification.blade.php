@@ -136,21 +136,27 @@
                     </tr>
                 @else
                     @php
-                        $anterior = $anteriores[$item->rubro_id] ?? 0;
-                        $actual = $actuales[$item->rubro_id] ?? 0;
+                        $medidoEnEstaActa = ($actuales[$item->rubro_id] ?? 0) > 0;
+                        // Anterior, Actual y Acumulado sólo se muestran para rubros medidos en esta carga; el resto queda en blanco
+                        $anterior = $medidoEnEstaActa ? ($anteriores[$item->rubro_id] ?? 0) : 0;
+                        $actual = $medidoEnEstaActa ? ($actuales[$item->rubro_id] ?? 0) : 0;
                         $acumulado = $anterior + $actual;
+                        $cantidadOrdenBase = $cantidadesOrden[$item->rubro_id] ?? 0;
+                        // Cant. sólo se muestra si el rubro fue medido en esta acta y tiene saldo asignado en la orden; caso contrario, 0
+                        $cantidadOrden = ($medidoEnEstaActa && $cantidadOrdenBase > 0) ? $cantidadOrdenBase : 0;
+                        $excedeSaldo = $acumulado > $cantidadOrden;
                     @endphp
                     <tr>
                         <td style="text-align: center;">{{ $item->item_number }}</td>
                         <td>{{ $item->rubro->description }}</td>
-                        <td style="text-align: center;">{{ number_format($item->quantity, 2, ',', '.') }}</td>
+                        <td style="text-align: center;">{{ number_format($cantidadOrden, 2, ',', '.') }}</td>
                         <td style="text-align: center;">{{ $item->rubro->orderPresentations->description }}</td>
                         <td style="text-align: right;">{{ $anterior > 0 ? number_format($anterior, 2, ',', '.') : '-' }}</td>
                         <td style="text-align: right;">{{ $anterior > 0 ? number_format($anterior, 2, ',', '.') : '-' }}</td>
                         <td style="text-align: right;">{{ $actual > 0 ? number_format($actual, 2, ',', '.') : '-' }}</td>
                         <td style="text-align: right;">{{ $actual > 0 ? number_format($actual, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right;">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right;">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
                     </tr>
                 @endif
             @endforeach

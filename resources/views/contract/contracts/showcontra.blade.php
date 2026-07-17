@@ -2,21 +2,263 @@
 
 @push('styles')
     <style type="text/css">
-        .table td,
-        .table th {
-            padding: 0.2rem 0.5rem;
-            font-size: 14px
+        .contra-page {
+            --acta-primary: #2f6f97;
+            --acta-primary-dark: #204d69;
+            --acta-accent: #2196f3;
+            --acta-success: #2eb85c;
+            --acta-warning: #f9b115;
+            --acta-danger: #e55353;
         }
 
-        .tab-content.card-block {
-            padding: 1.25rem 0.5rem;
-        }
-
-        .card-block table thead th {
-            background-color: #347ead;
+        /* ---------- Hero / encabezado ---------- */
+        .contra-page .acta-hero {
+            background: linear-gradient(135deg, var(--acta-primary) 0%, var(--acta-primary-dark) 100%);
+            border-radius: 16px;
+            border: 0;
             color: #fff;
-            border-color: #347ead;
+            box-shadow: 0 8px 24px rgba(32, 77, 105, .25);
+            overflow: hidden;
+        }
+
+        .contra-page .acta-hero .breadcrumb {
+            background: rgba(255, 255, 255, .12);
+            border-radius: 30px;
+        }
+
+        .contra-page .acta-hero .breadcrumb-item a {
+            color: #fff;
+            opacity: .9;
+        }
+
+        .contra-page .acta-hero-icon {
+            width: 56px;
+            height: 56px;
+            min-width: 56px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .contra-page .acta-hero-eyebrow {
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-size: 12px;
+            opacity: .85;
+            font-weight: 600;
+        }
+
+        .contra-page .acta-state-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, .15);
+            border-radius: 30px;
+            padding: 6px 16px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .contra-page .acta-dependency {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            opacity: .95;
+        }
+
+        /* ---------- Card acciones ---------- */
+        .contra-page .acta-actions-card {
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+        }
+
+        /* ---------- Cards generales ---------- */
+        .contra-page .acta-card {
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, .06);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .contra-page .acta-card-header {
+            background: #f7fafc;
+            border-bottom: 1px solid #edf2f7;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .contra-page .acta-card-header h5 {
+            margin: 0;
+            font-weight: 700;
+            color: var(--acta-primary-dark);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contra-page .acta-card-body {
+            padding: 20px;
+        }
+
+        /* ---------- Tabla de órdenes ---------- */
+        .contra-page .table td,
+        .contra-page .table th {
+            padding: 10px 12px;
+            font-size: 13.5px;
+            vertical-align: middle;
+        }
+
+        .contra-page #items thead th {
+            background: linear-gradient(135deg, var(--acta-primary) 0%, var(--acta-primary-dark) 100%);
+            color: #fff;
+            border-color: var(--acta-primary);
             white-space: nowrap;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        .contra-page #items tbody tr:hover {
+            background: #f5fbff;
+        }
+
+        .contra-page .badge-pill {
+            padding: 5px 12px;
+            font-weight: 600;
+        }
+
+        .contra-page .btn-icon {
+            border-radius: 30px;
+            width: auto;
+            padding: 6px 12px;
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+
+        .contra-page .btn-icon:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .15);
+        }
+
+        /* ---------- Estado vacío ---------- */
+        .contra-page .acta-empty-state {
+            text-align: center;
+            padding: 40px 10px;
+            color: #97a3ad;
+        }
+
+        .contra-page .acta-empty-state i {
+            font-size: 38px;
+            margin-bottom: 10px;
+            display: block;
+            color: #cbd7de;
+        }
+
+        /* ---------- Botón agregar orden ---------- */
+        .contra-page .acta-actionbar {
+            padding: 16px 20px;
+            border-top: 1px solid #edf2f7;
+            text-align: right;
+        }
+
+        .contra-page .acta-actionbar .btn {
+            border-radius: 30px;
+            padding: 10px 24px;
+            font-weight: 700;
+        }
+
+        /* ---------- Modal Actas de Medición ---------- */
+        .contra-page .modal-content {
+            border: 0;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .contra-page .modal-header {
+            background: linear-gradient(135deg, var(--acta-primary) 0%, var(--acta-primary-dark) 100%);
+            border-bottom: 0;
+        }
+
+        .contra-page .modal-header .modal-title {
+            color: #fff;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .contra-page .modal-header .close {
+            color: #fff;
+            opacity: .85;
+            text-shadow: none;
+        }
+
+        .contra-page .modal-header .close:hover {
+            color: #fff;
+            opacity: 1;
+        }
+
+        .contra-page .modal-body table thead th {
+            background: #eef5f9;
+            color: var(--acta-primary-dark);
+            border-top: 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        .contra-page .modal-body table tbody tr:hover {
+            background: #f7fbfd;
+        }
+
+        .contra-page .acta-pdf-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff0ee;
+            color: #d9534f;
+            border-radius: 30px;
+            padding: 5px 14px;
+            font-weight: 600;
+            font-size: 12.5px;
+            text-decoration: none;
+        }
+
+        .contra-page .acta-pdf-link:hover {
+            color: #d9534f;
+            text-decoration: none;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 767.98px) {
+            .contra-page .acta-hero {
+                border-radius: 12px;
+                text-align: center;
+            }
+
+            .contra-page .acta-hero .d-flex {
+                justify-content: center;
+            }
+
+            .contra-page .acta-card-body {
+                padding: 14px;
+            }
+
+            .contra-page .acta-actionbar {
+                text-align: center;
+            }
+
+            .contra-page .acta-actionbar .btn {
+                width: 100%;
+            }
         }
     </style>
 @endpush
@@ -29,34 +271,54 @@
 @endif 
 
 @section('content')
-    {{-- <div class="container"> --}}
-    <div class="pcoded-content">
-        <div class="page-header card">
-            <div class="row align-items-end">
+    <div class="pcoded-content contra-page">
+
+        {{-- HERO --}}
+        <div class="page-header card acta-hero mb-3">
+            <div class="row align-items-center p-2">
                 <div class="col-12 col-lg-8">
-                    <div class="page-header-title">
-                        <i class="fa fa-list bg-c-blue"></i>
-                        <div class="d-inline">
-                            <h5>Módulo de Certificaciones</h5>
-                            <span>Contrato Nº {{ $contract->number_year }}</span>
-                            <br><br>
-                            <h5>
-                                <p style="font-size: 17px; font-weight: bold; color:#FF0000;">Estado Actual:
-                                    {{ $contract->contractState->id . ' - ' . $contract->contractState->description }}</p>
-                            </h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="acta-hero-icon"><i class="fa-solid fa-file-signature"></i></div>
+                        <div class="ml-3">
+                            <div class="acta-hero-eyebrow">Módulo de Certificaciones</div>
+                            <h4 class="mb-1 text-white">{{ $contract->description }} - {{ $contract->modality->description }} - Contrato N° {{ $contract->number_year }}</h4>
+                            <div class="d-flex flex-wrap gap-2" style="gap:8px;">
+                                <span class="acta-state-badge"><i class="fa-solid fa-circle-check"></i> {{ $contract->contractState->id }} - {{ $contract->contractState->description }}</span>
+                                <span class="acta-dependency"><i class="fa-solid fa-building"></i> {{ $contract->dependency->description }}</span>
+                            </div>
+                            <div class="acta-dependency mt-1"><i class="fa-solid fa-user-tie"></i> Contratista: {{ $contract->provider->description }}</div>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-lg-4">
-                    <div class="page-header-breadcrumb">
-                        <ul class=" breadcrumb breadcrumb-title">
-                            <li class="breadcrumb-item">
-                                <a href="{{ route('home') }}"><i class="fa-solid fa-house"></i></a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a href="{{ route('contracts.index') }}">Contratos</a>
-                            </li>
-                        </ul>
+                <div class="col-12 col-lg-4 text-lg-right mt-3 mt-lg-0">
+                    <ul class="breadcrumb breadcrumb-title justify-content-lg-end mb-2">
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}"><i class="fa-solid fa-house"></i></a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('contracts.index') }}">Contratos</a></li>
+                    </ul>
+
+                    @if (Auth::user()->hasPermission(['admin.contracts.update']))
+                        <button class="btn btn-light dropdown-toggle waves-effect"
+                            type="button" id="acciones" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="true">Acciones</button>
+                    @endif
+
+                    <div class="dropdown-menu" aria-labelledby="acciones"
+                        data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
+                        {{-- Verificamos permisos de edición del usuario --}}
+                        @if (
+                            (Auth::user()->hasPermission(['contracts.contracts.update']) && $contract->contract_state_id >= 1) ||
+                                Auth::user()->hasPermission(['admin.contracts.update']))
+                            <a style="font-size: 14px; font-weight: bold; color:blue;background-color:lightblue;"
+                                class="dropdown-item waves-effect f-w-600"
+                                href="{{ route('contracts.edit', $contract->id) }}">Editar
+                                Contrato</a>
+                        @endif
+
+                        @if (Auth::user()->hasPermission(['admin.contracts.delete']) ||
+                                Auth::user()->hasPermission(['contracts.contracts.delete']))
+                            {{-- <a href="#" style="font-size: 14px; font-weight: bold; color:red;background-color:lightblue;" class="dropdown-item waves-effect f-w-600" onclick="deleteContract('{{ $contract->id }}')">Eliminar Llamado</a> --}}
+                            {{-- <button type="button" title="Borrar" class="btn btn-danger btn-icon" onclick="deleteItem({{ $contract->id }})"><i class="fa fa-trash"></i></button>                                                         --}}
+                        @endif
                     </div>
                 </div>
             </div>
@@ -68,75 +330,22 @@
                     <div class="page-body">
                         <div class="row">
                             <div class="col-sm-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <div class="row">
-                                            <div class="col-12 col-md-8 text-left">
-                                                <h5>Llamado:
-                                                    {{-- {{ $contract->description . ' - ' . $contract->modality->description . ' - Contrato N° ' . $contract->number_year . ' - ' . $contract->provider->description }} --}}
-                                                    {{ $contract->description }} - {{ $contract->modality->description }} - Contrato N° {{ $contract->number_year }}
-                                                </h5>
-                                                <h5 style="color: red; background-color: yellow;"> Contratista: {{ $contract->provider->description }}</h5>
-                                            </div>
-                                            <div class="col-12 col-md-8 text-left">
-                                                <h5 style="font-size: 17px; font-weight: bold; color:blue">Dependencia
-                                                    Responsable: {{ $contract->dependency->description }}</h5>
-                                            </div>
 
-                                            <div class="col-12 col-md-4 mt-2 mt-md-0">
-                                                @if (Auth::user()->hasPermission(['admin.contracts.update']))
-                                                    {{-- @if (in_array($contract->contract_state_id, [1, 2])) --}}
-                                                    <button class="btn btn-primary dropdown-toggle waves-effect"
-                                                        type="button" id="acciones" data-toggle="dropdown"
-                                                        aria-haspopup="true" aria-expanded="true">Acciones</button>
-                                                    {{-- @endif --}}
-                                                @endif
-
-                                                <div class="dropdown-menu" aria-labelledby="acciones"
-                                                    data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
-                                                    {{-- Verificamos permisos de edición del usuario --}}
-                                                    @if (
-                                                        (Auth::user()->hasPermission(['contracts.contracts.update']) && $contract->contract_state_id >= 1) ||
-                                                            Auth::user()->hasPermission(['admin.contracts.update']))
-                                                        <a style="font-size: 14px; font-weight: bold; color:blue;background-color:lightblue;"
-                                                            class="dropdown-item waves-effect f-w-600"
-                                                            href="{{ route('contracts.edit', $contract->id) }}">Editar
-                                                            Contrato</a>
-                                                    @endif
-
-                                                    @if (Auth::user()->hasPermission(['admin.contracts.delete']) ||
-                                                            Auth::user()->hasPermission(['contracts.contracts.delete']))
-                                                        {{-- <a href="#" style="font-size: 14px; font-weight: bold; color:red;background-color:lightblue;" class="dropdown-item waves-effect f-w-600" onclick="deleteContract('{{ $contract->id }}')">Eliminar Llamado</a> --}}
-                                                        {{-- <button type="button" title="Borrar" class="btn btn-danger btn-icon" onclick="deleteItem({{ $contract->id }})"><i class="fa fa-trash"></i></button>                                                         --}}
-                                                    @endif
-
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="card acta-card">
+                                    <div class="acta-card-header">
+                                        <h5><i class="fa-solid fa-list-check"></i> Órdenes de Ejecución - En Curso</h5>
+                                        <span class="badge badge-pill" style="background:#eef5f9;color:var(--acta-primary-dark);">{{ $orders->count() }} orden{{ $orders->count() === 1 ? '' : 'es' }}</span>
                                     </div>
-                                </div>
 
-                                <div class="card">
-                                    <div class="card-block">
-                                        {{-- <ul class="nav nav-tabs md-tabs" role="tablist">
-                                            <li class="nav-item">
-                                                <a class="nav-link" data-toggle="tab" href="#tab2" role="tab"><i
-                                                        class="fa fa-clone"></i> Órdenes de Ejec.</a>
-                                                <div class="slide"></div>
-                                            </li>                                            
-                                        </ul> --}}
-                                        
-                                        
-                                        <div class="tab-content card-block">
-                                            {{-- ORDENES DE EJECUCIÓN - MUESTRA CON SEARCH --}}
-                                            <link rel="stylesheet"
-                                                href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-                                            <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-                                            <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
-                                            {{-- <div class="tab-pane" id="tab2" role="tabpanel"> --}}
+                                    @if ($orders->isEmpty())
+                                        <div class="acta-empty-state">
+                                            <i class="fa-regular fa-folder-open"></i>
+                                            No hay órdenes de ejecución en estado "En Curso" para este contrato.
+                                        </div>
+                                    @else
+                                        <div class="acta-card-body p-0">
                                             <div class="table-responsive">
-                                                <table id="items" class="display; table table-striped table-bordered"
+                                                <table id="items" class="display table table-striped table-bordered mb-0"
                                                     style="width:100%">
                                                     <thead>
                                                         <tr>                                                            
@@ -198,7 +407,7 @@
                                                                     @if ($order->sign_date)
                                                                         @if ($order->orderState->id == 1 && $fechaCalculada && \Carbon\Carbon::now()->gt($fechaCalculada))
                                                                             {{ $fechaCalculada->format('d/m/Y') }}
-                                                                            <span class="badge badge-warning">FECHA ALERTA</span>
+                                                                            <span class="badge badge-pill badge-warning">FECHA ALERTA</span>
                                                                         @else
                                                                             @php
                                                                                 $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
@@ -207,7 +416,7 @@
                                                                             @if ($fechaCalculada)
                                                                                 {{ $fechaCalculada->format('d/m/Y') }}
                                                                                 @if ($eventDays)
-                                                                                    <span class="badge badge-danger">EXTENDIDO</span>
+                                                                                    <span class="badge badge-pill badge-danger">EXTENDIDO</span>
                                                                                 @endif
                                                                             @endif
                                                                         @endif
@@ -235,7 +444,7 @@
                                                                         @if ($order->sign_date)
                                                                             @if ($order->orderState->id == 1 && $fechaVencimiento && \Carbon\Carbon::now()->gt($fechaVencimiento))
                                                                                 {{ $fechaVencimiento->format('d/m/Y') }}
-                                                                                <span class="badge badge-danger">PLAZO VENCIDO</span>
+                                                                                <span class="badge badge-pill badge-danger">PLAZO VENCIDO</span>
                                                                             @else
                                                                                 @php
                                                                                     $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
@@ -244,7 +453,7 @@
                                                                                 @if ($fechaVencimiento)
                                                                                     {{ $fechaVencimiento->format('d/m/Y') }}
                                                                                     @if ($eventDays)
-                                                                                    <span class="badge badge-danger">EXTENDIDO</span>
+                                                                                    <span class="badge badge-pill badge-danger">EXTENDIDO</span>
                                                                                     @endif
                                                                                 @endif
                                                                             @endif
@@ -270,6 +479,14 @@
                                                                                         class="btn btn-primary btn-icon"
                                                                                         onclick="certiOrder({{ $order->id }}, {{ $order->contract->id }}, {{ $order->component->id }})">
                                                                                         <i class="fa fa-table"></i></button>
+
+                                                                                {{-- INDICA QUE LA ORDEN YA TIENE ACTAS DE MEDICIÓN GENERADAS --}}
+                                                                                @if ($order->certifications->count() > 0)
+                                                                                    <button type="button" title="Ya tiene Actas de Medición generadas"
+                                                                                        class="btn btn-danger btn-icon"
+                                                                                        data-toggle="modal" data-target="#modalActas{{ $order->id }}">
+                                                                                        <i class="fa-solid fa-clipboard-check"></i></button>
+                                                                                @endif
                                                                             {{-- @endif                                                                             --}}
                                                                         {{-- @endif --}}
 
@@ -322,53 +539,27 @@
                                                     </tbody>
                                                 </table>
                                             </div>
-
-                                                <div class="text-right">
-                                                    {{-- @if (Auth::user()->hasPermission(['contracts.contracts.create', 'admin.orders.create'])) --}}
-                                                    @if (Auth::user()->hasPermission(['admin.orders.create', 'orders.orders.create']))
-                                                        @if ($contract)
-                                                            {{-- Si contrato tiene rubros cargados --}}    
-                                                            @if ($contract->itemsContracts->isNotEmpty())
-                                                                {{-- Si contrato está anulado no muestra agregar ítems --}}
-                                                                @if (in_array($contract->contract_state_id, [1]))
-                                                                    <a href="{{ route('contracts.orders.create', $contract->id) }}" class="btn btn-primary">Agregar Orden</a>
-                                                                @else
-                                                                    <button class="btn btn-danger" disabled>Contrato no está en Curso</button>
-                                                                @endif    
-                                                            @else
-                                                                <button class="btn btn-danger" disabled>Falta Agregar Rubros al Contrato</button>
-                                                            @endif
-                                                        @else
-                                                            <p class="text-danger">No hay un contrato disponible.</p>
-                                                        @endif
-
-
-                                                    @endif
-                                                </div>
-                                                {{-- <br><br><br> --}}
-                                                {{-- ACA DEBEN IR VALORES CALCULADOS DE ACUERDO A LA GENERACIÓN DE ORDENES --}}
-                                                {{-- <div
-                                                    style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                                                    <div
-                                                        style="flex: 1; text-align: center; font-size: 16px; font-weight: bold; color: blue; background-color: white; padding: 10px;">
-                                                        <u>MONTO DEL CONTRATO:</u> {{ $contract->totalAmountFormat() }}
-                                                    </div>
-                                                    <div
-                                                        style="flex: 1; text-align: center; font-size: 16px; font-weight: bold; color: blue; background-color: white; padding: 10px;">
-                                                        <u>MONTO COMPROMETIDO:</u>
-                                                        {{ number_format($contract->compro_amount, 0, ',', '.') }}
-                                                    </div>
-                                                    <div
-                                                        style="flex: 1; text-align: center; font-size: 16px; font-weight: bold; color: red; background-color: white; padding: 10px;">
-                                                        <u>MONTO UTILIZADO:</u> 0
-                                                    </div>
-                                                    <div
-                                                        style="flex: 1; text-align: center; font-size: 16px; font-weight: bold; color: blue; background-color: white; padding: 10px;">
-                                                        <u>SALDO DEL CONTRATO:</u> {{ $contract->totalAmountFormat() }}                                                        
-                                                    </div>
-                                                </div>                                                 --}}
-                                            {{-- </div>                                             --}}
                                         </div>
+                                    @endif
+
+                                    <div class="acta-actionbar">
+                                        @if (Auth::user()->hasPermission(['admin.orders.create', 'orders.orders.create']))
+                                            @if ($contract)
+                                                {{-- Si contrato tiene rubros cargados --}}
+                                                @if ($contract->itemsContracts->isNotEmpty())
+                                                    {{-- Si contrato está anulado no muestra agregar ítems --}}
+                                                    @if (in_array($contract->contract_state_id, [1]))
+                                                        <a href="{{ route('contracts.orders.create', $contract->id) }}" class="btn btn-primary"><i class="fa-solid fa-plus mr-1"></i> Agregar Orden</a>
+                                                    @else
+                                                        <button class="btn btn-danger" disabled>Contrato no está en Curso</button>
+                                                    @endif
+                                                @else
+                                                    <button class="btn btn-danger" disabled>Falta Agregar Rubros al Contrato</button>
+                                                @endif
+                                            @else
+                                                <p class="text-danger mb-0">No hay un contrato disponible.</p>
+                                            @endif
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -377,6 +568,59 @@
                 </div>
             </div>
         </div>
+
+        {{-- MODALES DE VISUALIZACIÓN DE ACTAS DE MEDICIÓN YA GENERADAS POR ORDEN --}}
+        @foreach ($orders as $order)
+            @if ($order->certifications->count() > 0)
+                <div class="modal fade" id="modalActas{{ $order->id }}" tabindex="-1" role="dialog" aria-labelledby="modalActasLabel{{ $order->id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalActasLabel{{ $order->id }}">
+                                    <i class="fa-solid fa-clipboard-check mr-1"></i>
+                                    Actas de Medición - Orden N° {{ $order->component->code }}-{{ $order->number }}
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>N° Planilla</th>
+                                                <th>Período</th>
+                                                <th>Fecha Medición</th>
+                                                <th class="text-right">PDF</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($order->certifications->sortBy('number') as $certification)
+                                                <tr>
+                                                    <td><strong>{{ $certification->number }}</strong></td>
+                                                    <td>{{ $certification->period }}</td>
+                                                    <td>{{ $certification->signDateFormat() }}</td>
+                                                    <td class="text-right">
+                                                        <a href="{{ route('item_certifications.pdf', $certification->id) }}"
+                                                            target="_blank" rel="noopener" class="acta-pdf-link">
+                                                            <i class="fa-solid fa-file-pdf"></i> Ver Acta N° {{ $certification->number }}
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endforeach
     </div>
 @endsection
 
@@ -384,8 +628,19 @@
     <script type="text/javascript">
         $(document).ready(function() {
 
-            $('#items').DataTable();        
-            
+            $('#items').DataTable({
+                "responsive": true,
+                "autoWidth": false,
+                "language": {
+                    "search": "Buscar orden:",
+                    "lengthMenu": "Mostrar _MENU_ órdenes",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ órdenes",
+                    "infoEmpty": "Sin órdenes en curso",
+                    "zeroRecords": "No se encontraron órdenes",
+                    "paginate": { "previous": "Anterior", "next": "Siguiente" }
+                },
+            });
+
 
             const table = $('#example').DataTable({
                 ajax: '/tables', // URL que devuelve los datos JSON
