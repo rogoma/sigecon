@@ -115,6 +115,9 @@ class ItemsContractsController extends Controller
                 ->orderBy('id')
                 ->get();
 
+        // Cant. a Ejecutar por rubro, asignada a esta orden (0 si el rubro del componente no fue incluido en la orden)
+        $cantidadesOrden = $items->pluck('quantity', 'rubro_id');
+
         // Cantidad ya certificada (Anterior) por rubro, sumando todas las actas de medición previas de esta orden
         $anteriores = ItemCertificationDetail::whereHas('itemCertification', function ($q) use ($order_id) {
                 $q->where('order_id', $order_id);
@@ -134,7 +137,78 @@ class ItemsContractsController extends Controller
             ->orderBy('number', 'asc')
             ->get();
 
-        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'cantidadesContrato', 'nextCertificationNumber', 'certifications'));
+        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'cantidadesContrato', 'cantidadesOrden', 'nextCertificationNumber', 'certifications'));
+    }
+
+    /**
+     * PARA MOSTRAR VISTA DE MEDICIÓN COMBINANDO TODAS LAS ÓRDENES "EN CURSO" QUE COMPARTEN
+     * LA MISMA LOCALIDAD Y EL MISMO SUB-COMPONENTE (pueden existir varias por distintos periodos).
+     * La "Cant. a Ejecutar" y el "Anterior" de cada rubro se muestran sumando todas esas órdenes.
+     */
+    public function indexCertiGroup(Request $request, $contract_id, $locality_id, $component_id)
+    {
+        $contract = Contract::findOrFail($contract_id);
+
+        // Chequeamos permisos del usuario: acceso vía permiso, vía rol Contratista (role_id 4, no maneja permisos) o por dependencia dueña del contrato
+        if (!$request->user()->hasPermission(['admin.items.index', 'contracts.items.index', 'contracts.items.show'])
+            && $request->user()->role_id != 4
+            && $contract->dependency_id != $request->user()->dependency_id) {
+            return back()->with('error', 'No tiene los suficientes permisos para acceder a esta sección.');
+        }
+
+        // Órdenes "En Curso" que comparten Contrato + Localidad + Sub-Componente
+        $orders = Order::with('locality', 'component', 'creatorUser')
+            ->where('contract_id', $contract_id)
+            ->where('locality_id', $locality_id)
+            ->where('component_id', $component_id)
+            ->where('order_state_id', 1)
+            ->orderBy('id')
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return back()->with('error', 'No hay Órdenes de Ejecución en curso para esta Localidad y Sub-Componente.');
+        }
+
+        $orderIds = $orders->pluck('id');
+
+        $items0 = ItemContract::where('contract_id', $contract_id)
+                ->where('component_id', $component_id)
+                ->orderBy('id')
+                ->get();
+
+        // Cant. a Ejecutar agregada por rubro: suma de lo asignado en items_orders de TODAS las órdenes del grupo
+        $cantidadesGrupo = ItemOrder::whereIn('order_id', $orderIds)
+                ->selectRaw('rubro_id, SUM(quantity) as total')
+                ->groupBy('rubro_id')
+                ->pluck('total', 'rubro_id');
+
+        // Cantidad ya certificada (Anterior) por rubro, sumando todas las actas previas de CUALQUIERA de las órdenes del grupo
+        $anteriores = ItemCertificationDetail::whereHas('itemCertification', function ($q) use ($orderIds) {
+                $q->whereIn('order_id', $orderIds);
+            })
+            ->selectRaw('rubro_id, SUM(quantity) as total')
+            ->groupBy('rubro_id')
+            ->pluck('total', 'rubro_id');
+
+        // Cantidad Contratada por rubro (Cant. Contract.)
+        $cantidadesContrato = $items0->pluck('quantity', 'rubro_id');
+
+        // Próximo N° de Planilla sugerido: siguiente al mayor usado en cualquiera de las órdenes del grupo
+        $nextCertificationNumber = (int) ItemCertification::whereIn('order_id', $orderIds)->max('number') + 1;
+
+        // Actas de Medición ya generadas para cualquiera de las órdenes de este grupo
+        $certifications = ItemCertification::whereIn('order_id', $orderIds)
+            ->with('order')
+            ->orderBy('number', 'asc')
+            ->get();
+
+        $locality = $orders->first()->locality;
+        $component = $orders->first()->component;
+
+        return view('contract.itemsorders.index_itemsorders_group', compact(
+            'items0', 'cantidadesGrupo', 'contract', 'orders', 'locality', 'component',
+            'anteriores', 'cantidadesContrato', 'nextCertificationNumber', 'certifications'
+        ));
     }
 
     /**
@@ -162,7 +236,7 @@ class ItemsContractsController extends Controller
                     return $q->where('order_id', $order_id);
                 }),
             ],
-            'month_date' => 'required|string',
+            'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
             'sign_date' => 'required|date_format:d/m/Y',
             'contratista_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
@@ -171,11 +245,16 @@ class ItemsContractsController extends Controller
         ];
         $messages = [
             'number.unique' => 'Ya existe una Acta de Medición con ese N° de Planilla para esta orden.',
+            'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
             return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 200], 200);
+        }
+
+        if ($this->periodoExcedeFechaMedicion($request->input('month_date'), $request->input('sign_date'))) {
+            return response()->json(['status' => 'error', 'message' => 'El Mes/Año del periodo no puede ser posterior al mes de la Fecha de la Medición.', 'code' => 200], 200);
         }
 
         // Solo persistimos rubros con cantidad medida mayor a 0
@@ -211,6 +290,166 @@ class ItemsContractsController extends Controller
             'status' => 'success',
             'message' => 'Acta de Medición N° ' . $number . ' generada correctamente.',
             'redirect_url' => route('item_certifications.pdf', $certification->id),
+        ]);
+    }
+
+    /**
+     * Guarda la medición combinada de un grupo de Órdenes "En Curso" (misma Localidad + Sub-Componente).
+     * La cantidad medida de cada rubro se reparte contra el saldo de cada orden, empezando por la más
+     * antigua; si sobra medición luego de agotar el saldo de todas las órdenes del grupo, el excedente
+     * se registra contra la orden más reciente (misma lógica de "excede saldo" que la carga por orden individual).
+     * Se genera una Acta de Medición por cada orden que resulte con rubros medidos.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function storeCertiGroup(Request $request, $contract_id, $locality_id, $component_id)
+    {
+        $contract = Contract::findOrFail($contract_id);
+
+        // Chequeamos permisos del usuario: acceso vía permiso, vía rol Contratista (role_id 4, no maneja permisos) o por dependencia dueña del contrato
+        if (!$request->user()->hasPermission(['admin.items.create', 'contracts.items.create'])
+            && $request->user()->role_id != 4
+            && $contract->dependency_id != $request->user()->dependency_id) {
+            return response()->json(['status' => 'error', 'message' => 'No posee los suficientes permisos para realizar esta acción.', 'code' => 200], 200);
+        }
+
+        $orders = Order::where('contract_id', $contract_id)
+            ->where('locality_id', $locality_id)
+            ->where('component_id', $component_id)
+            ->where('order_state_id', 1)
+            ->orderBy('id') // más antigua primero, para el reparto de saldo
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return response()->json(['status' => 'error', 'message' => 'No hay Órdenes de Ejecución en curso para esta Localidad y Sub-Componente.', 'code' => 200], 200);
+        }
+
+        $rules = [
+            'number' => 'required|integer|min:1',
+            'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
+            'sign_date' => 'required|date_format:d/m/Y',
+            'contratista_representative' => 'required|string|max:150',
+            'items' => 'required|array|min:1',
+            'items.*.rubro_id' => 'required|integer',
+            'items.*.quantity' => 'required|numeric|min:0',
+        ];
+        $messages = [
+            'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
+            'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+        ];
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 200], 200);
+        }
+
+        if ($this->periodoExcedeFechaMedicion($request->input('month_date'), $request->input('sign_date'))) {
+            return response()->json(['status' => 'error', 'message' => 'El Mes/Año del periodo no puede ser posterior al mes de la Fecha de la Medición.', 'code' => 200], 200);
+        }
+
+        $number = (int) $request->input('number');
+        $orderIds = $orders->pluck('id');
+
+        // El N° de Planilla se genera en todas las órdenes afectadas, así que debe estar libre en todas ellas
+        $numeroEnUso = ItemCertification::whereIn('order_id', $orderIds)->where('number', $number)->exists();
+        if ($numeroEnUso) {
+            return response()->json(['status' => 'error', 'message' => 'Ya existe una Acta de Medición con ese N° de Planilla en alguna de las órdenes de este grupo.', 'code' => 200], 200);
+        }
+
+        // Solo persistimos rubros con cantidad medida mayor a 0
+        $itemsInput = collect($request->input('items'))->filter(function ($item) {
+            return (float) $item['quantity'] > 0;
+        });
+
+        if ($itemsInput->isEmpty()) {
+            return response()->json(['status' => 'error', 'message' => 'Debe ingresar al menos una cantidad medida mayor a 0.', 'code' => 200], 200);
+        }
+
+        // Cant. a Ejecutar por orden y rubro (lo asignado en items_orders de cada orden)
+        $cantidadesPorOrden = ItemOrder::whereIn('order_id', $orderIds)
+            ->get()
+            ->groupBy('order_id')
+            ->map(function ($rows) {
+                return $rows->pluck('quantity', 'rubro_id');
+            });
+
+        // Lo ya certificado por orden y rubro en actas previas
+        $certificadoPorOrden = ItemCertificationDetail::join('item_certifications', 'item_certifications.id', '=', 'item_certification_details.item_certification_id')
+            ->whereIn('item_certifications.order_id', $orderIds)
+            ->selectRaw('item_certifications.order_id as order_id, item_certification_details.rubro_id as rubro_id, SUM(item_certification_details.quantity) as total')
+            ->groupBy('item_certifications.order_id', 'item_certification_details.rubro_id')
+            ->get()
+            ->groupBy('order_id')
+            ->map(function ($rows) {
+                return $rows->pluck('total', 'rubro_id');
+            });
+
+        // Repartimos cada rubro medido contra el saldo de cada orden, de la más antigua a la más reciente
+        $detallesPorOrden = []; // [order_id => [rubro_id => quantity]]
+        foreach ($itemsInput as $itemInput) {
+            $rubroId = $itemInput['rubro_id'];
+            $restante = (float) $itemInput['quantity'];
+
+            foreach ($orders as $order) {
+                if ($restante <= 0) {
+                    break;
+                }
+                $asignadoOrden = (float) ($cantidadesPorOrden[$order->id][$rubroId] ?? 0);
+                $certificadoOrden = (float) ($certificadoPorOrden[$order->id][$rubroId] ?? 0);
+                $saldoOrden = max(0, $asignadoOrden - $certificadoOrden);
+                if ($saldoOrden <= 0) {
+                    continue;
+                }
+                $aplicar = min($restante, $saldoOrden);
+                $detallesPorOrden[$order->id][$rubroId] = ($detallesPorOrden[$order->id][$rubroId] ?? 0) + $aplicar;
+                $restante -= $aplicar;
+            }
+
+            // Excedente sin saldo en ninguna orden del grupo: se registra contra la orden más reciente
+            // (permite exceder saldo, igual que la carga por orden individual)
+            if ($restante > 0) {
+                $ordenMasReciente = $orders->last();
+                $detallesPorOrden[$ordenMasReciente->id][$rubroId] = ($detallesPorOrden[$ordenMasReciente->id][$rubroId] ?? 0) + $restante;
+            }
+        }
+
+        $signDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->input('sign_date'))->format('Y-m-d');
+        $creatorUserId = $request->user()->id;
+        $period = $request->input('month_date');
+        $contratistaRepresentative = $request->input('contratista_representative');
+
+        $certifications = DB::transaction(function () use ($detallesPorOrden, $number, $period, $signDate, $creatorUserId, $contratistaRepresentative) {
+            $created = [];
+            foreach ($detallesPorOrden as $orderId => $rubros) {
+                $certification = ItemCertification::create([
+                    'order_id' => $orderId,
+                    'number' => $number,
+                    'period' => $period,
+                    'sign_date' => $signDate,
+                    'creator_user_id' => $creatorUserId,
+                    'state_id' => ItemCertification::STATE_EMITIDO,
+                    'contratista_representative' => $contratistaRepresentative,
+                ]);
+
+                foreach ($rubros as $rubroId => $quantity) {
+                    ItemCertificationDetail::create([
+                        'item_certification_id' => $certification->id,
+                        'rubro_id' => $rubroId,
+                        'quantity' => $quantity,
+                    ]);
+                }
+
+                $created[] = $certification;
+            }
+
+            return $created;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Acta de Medición N° ' . $number . ' generada correctamente en ' . count($certifications) . ' orden' . (count($certifications) === 1 ? '' : 'es') . '.',
+            'redirect_urls' => collect($certifications)->map(function ($certification) {
+                return route('item_certifications.pdf', $certification->id);
+            })->values(),
         ]);
     }
 
@@ -301,7 +540,7 @@ class ItemsContractsController extends Controller
                     return $q->where('order_id', $order->id);
                 })->ignore($certification->id),
             ],
-            'month_date' => 'required|string',
+            'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
             'sign_date' => 'required|date_format:d/m/Y',
             'contratista_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
@@ -310,11 +549,16 @@ class ItemsContractsController extends Controller
         ];
         $messages = [
             'number.unique' => 'Ya existe otra Acta de Medición con ese N° de Planilla para esta orden.',
+            'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
             return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 200], 200);
+        }
+
+        if ($this->periodoExcedeFechaMedicion($request->input('month_date'), $request->input('sign_date'))) {
+            return response()->json(['status' => 'error', 'message' => 'El Mes/Año del periodo no puede ser posterior al mes de la Fecha de la Medición.', 'code' => 200], 200);
         }
 
         $items = collect($request->input('items'))->filter(function ($item) {
@@ -347,6 +591,28 @@ class ItemsContractsController extends Controller
             'message' => 'Acta de Medición N° ' . $certification->number . ' actualizada correctamente.',
             'redirect_url' => route('item_certifications.pdf', $certification->id),
         ]);
+    }
+
+    /**
+     * Compara el periodo (Mes/Año, formato mm/yyyy) contra el mes de la Fecha de la Medición (formato d/m/Y).
+     * El periodo puede ser igual o anterior al mes de la fecha de medición, pero nunca posterior.
+     */
+    private function periodoExcedeFechaMedicion(string $monthDate, string $signDateDmy): bool
+    {
+        if (!preg_match('/^(\d{2})\/(\d{4})$/', $monthDate, $matches)) {
+            return false;
+        }
+
+        try {
+            $signDate = \Carbon\Carbon::createFromFormat('d/m/Y', $signDateDmy);
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        $periodoValor = ((int) $matches[2]) * 12 + (int) $matches[1];
+        $signDateValor = $signDate->year * 12 + $signDate->month;
+
+        return $periodoValor > $signDateValor;
     }
 
     /**

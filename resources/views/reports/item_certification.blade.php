@@ -83,23 +83,25 @@
     <h4>PERIODO: {{ $certification->period }}</h4>
     <BR></BR>
     <h4 style="text-align: left;">ACTA DE MEDICIÓN</h4>
-<h4 style="text-align: left;">PLANILLA N° {{ $certification->number }}-{{ $order->component->componentType->description }}</h4>
+<h4 style="text-align: left;">PLANILLA N° {{ $order->component->componentType->code }}-{{ $order->component->componentType->description }}</h4>
 
     <div class="datos-generales">
         <p>
             En la Localidad: <strong>{{ $order->locality->description }}</strong> -
             Distrito: <strong>{{ $order->locality->district->description }}</strong> -
             Departamento: <strong>{{ $order->locality->district->department->description }}</strong>,
-            a los {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }},
-            en presencia de
+            {{-- a los {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }}, --}}
+            <strong>a los {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('D') }} días del mes de {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('MMMM') }} de {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('YYYY') }}</strong>,
+            en presencia del
             @if ($order->creatorUser)
-                {{ $order->creatorUser->name }} {{ $order->creatorUser->lastname }}
+                <strong>{{ $order->creatorUser->position->description }}
+                {{ $order->creatorUser->name }} {{ $order->creatorUser->lastname }}</strong>
             @else
                 (sin fiscal asignado)
             @endif
             representante de la fiscalización y
             @if ($certification->contratista_representative)
-                {{ $certification->contratista_representative }}
+                <strong>{{ $certification->contratista_representative }}</strong>
             @else
                 (sin representante asignado)
             @endif
@@ -110,14 +112,17 @@
     <table>
         <thead>
             <tr>
-                <th rowspan="2">N°</th>
-                <th rowspan="2">Descripción</th>
-                <th rowspan="2">Cant. Contract.</th>
-                <th rowspan="2">Cant. a Ejecutar</th>
-                <th rowspan="2">Unid.</th>
-                <th colspan="2">Anterior</th>
-                <th colspan="2">Actual</th>
-                <th colspan="2">Acumulado</th>
+                <th rowspan="3">N°</th>
+                <th rowspan="3">Descripción</th>
+                <th rowspan="3">Cant. Contractual</th>
+                <th rowspan="3">Cant. en Orden Ejec.</th>
+                <th rowspan="3">Unid.</th>
+                <th colspan="6">CANTIDADES</th>
+            </tr>
+            <tr>
+                <th colspan="2">ANTERIOR</th>
+                <th colspan="2">ACTUAL</th>
+                <th colspan="2">ACUMULADO</th>
             </tr>
             <tr>
                 <th>mdo</th>
@@ -146,6 +151,9 @@
                         // Cant. a Ejecutar sólo se muestra si el rubro fue medido en esta acta y tiene saldo asignado en la orden; caso contrario, 0
                         $cantidadOrden = ($medidoEnEstaActa && $cantidadOrdenBase > 0) ? $cantidadOrdenBase : 0;
                         $excedeSaldo = $acumulado > $cantidadOrden;
+                        // De acuerdo al ítem: puede tener mano de obra (mdo), materiales (mat), o ambos
+                        $tieneMdo = (float) ($item->unit_price_mo ?? 0) > 0;
+                        $tieneMat = (float) ($item->unit_price_mat ?? 0) > 0;
                     @endphp
                     <tr>
                         <td style="text-align: center;">{{ $item->item_number }}</td>
@@ -153,12 +161,12 @@
                         <td style="text-align: center;">{{ number_format($item->quantity, 2, ',', '.') }}</td>
                         <td style="text-align: center;">{{ number_format($cantidadOrden, 2, ',', '.') }}</td>
                         <td style="text-align: center;">{{ $item->rubro->orderPresentations->description }}</td>
-                        <td style="text-align: right;">{{ $anterior > 0 ? number_format($anterior, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right;">{{ $anterior > 0 ? number_format($anterior, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right;">{{ $actual > 0 ? number_format($actual, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right;">{{ $actual > 0 ? number_format($actual, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ $acumulado > 0 ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ ($tieneMdo && $anterior > 0) ? number_format($anterior, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ ($tieneMat && $anterior > 0) ? number_format($anterior, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ ($tieneMdo && $actual > 0) ? number_format($actual, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right;">{{ ($tieneMat && $actual > 0) ? number_format($actual, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ ($tieneMdo && $acumulado > 0) ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ ($tieneMat && $acumulado > 0) ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
                     </tr>
                 @endif
             @endforeach

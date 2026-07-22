@@ -85,7 +85,7 @@
             opacity: .95;
         }
 
-        /* ---------- Chips de la orden ---------- */
+        /* ---------- Chips de las órdenes ---------- */
         .acta-chips {
             border: 0;
             border-radius: 14px;
@@ -110,6 +110,11 @@
 
         .acta-chip i {
             color: var(--acta-primary);
+        }
+
+        .acta-chip-order {
+            background: #e8f4ea;
+            color: #1e7e34;
         }
 
         /* ---------- Cards generales ---------- */
@@ -434,7 +439,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="acta-hero-icon"><i class="fa-solid fa-file-signature"></i></div>
                         <div class="ml-3">
-                            <div class="acta-hero-eyebrow">Módulo de Certificaciones</div>
+                            <div class="acta-hero-eyebrow">Módulo de Certificaciones - Medición Combinada</div>
                             <h4 class="mb-1 text-white">{{ $contract->description }} - {{ $contract->modality->description }} - Contrato N° {{ $contract->number_year }}</h4>
                             <div class="d-flex flex-wrap gap-2" style="gap:8px;">
                                 <span class="acta-state-badge"><i class="fa-solid fa-circle-check"></i> {{ $contract->contractState->id }} - {{ $contract->contractState->description }}</span>
@@ -454,7 +459,7 @@
             </div>
         </div>
 
-        <input type="hidden" id="order_id" value="{{ $order->id }}">
+        <input type="hidden" id="store_url" value="{{ route('item_certifications.store_group', [$contract->id, $locality->id, $component->id]) }}">
         <input type="hidden" id="creator_user_id" value="{{ Auth::user()->id }}">
 
         <div class="pcoded-inner-content">
@@ -462,14 +467,15 @@
                 <div class="page-wrapper">
                     <div class="page-body">
 
-                        {{-- CHIPS DE LA ORDEN --}}
+                        {{-- CHIPS: LOCALIDAD, SUB-COMPONENTE Y ÓRDENES AFECTADAS --}}
                         <div class="acta-chips mb-8">
-                            <span class="acta-chip"><i class="fa-solid fa-file-contract"></i> Orden N° {{ $order->component->code }}-{{ $order->number }}</span>
-                            <span class="acta-chip"><i class="fa-solid fa-location-dot"></i> {{ $order->locality->description }}</span>
-                            <span class="acta-chip"><i class="fa-solid fa-diagram-project"></i> {{ $items0[0]->component->code }} - {{ $items0[0]->component->description }}</span>
-                            @if ($order->creatorUser)
-                                <span class="acta-chip"><i class="fa-solid fa-user-shield"></i> Fiscal: {{ $order->creatorUser->name }} {{ $order->creatorUser->lastname }}</span>
-                            @endif
+                            <span class="acta-chip"><i class="fa-solid fa-location-dot"></i> {{ $locality->description }}</span>
+                            <span class="acta-chip"><i class="fa-solid fa-diagram-project"></i> {{ $component->code }} - {{ $component->description }}</span>
+                            @foreach ($orders as $order)
+                                <span class="acta-chip acta-chip-order" title="Fiscal: {{ $order->creatorUser ? $order->creatorUser->name . ' ' . $order->creatorUser->lastname : 'sin asignar' }}">
+                                    <i class="fa-solid fa-file-contract"></i> Orden N° {{ $order->component_code }}-{{ $order->number }}
+                                </span>
+                            @endforeach
                         </div>
 
                         {{-- FORMULARIO NUEVA ACTA --}}
@@ -478,6 +484,10 @@
                                 <h5><i class="fa-solid fa-square-plus"></i> Nueva Acta de Medición</h5>
                             </div>
                             <div class="acta-card-body">
+                                <div class="alert alert-info mb-3" style="border-radius:10px;">
+                                    <i class="fa-solid fa-circle-info mr-1"></i>
+                                    Esta medición combina todas las Órdenes "En Curso" de esta Localidad y Sub-Componente. Al grabar, la cantidad de cada rubro se reparte automáticamente contra el saldo de cada orden (empezando por la más antigua), generando una Acta por cada orden afectada con el mismo N° de Planilla.
+                                </div>
                                 <div class="row">
                                     <div class="col-6 col-sm-4 col-lg-2 acta-field mb-3 mb-lg-0">
                                         <label for="sign_date">Fecha de la Medición</label>
@@ -556,6 +566,7 @@
                                             <thead>
                                                 <tr>
                                                     <th>N° Planilla</th>
+                                                    <th>Orden</th>
                                                     <th>Período</th>
                                                     <th>Fecha Medición</th>
                                                     <th>Estado</th>
@@ -566,6 +577,7 @@
                                                 @foreach ($certifications as $certification)
                                                     <tr>
                                                         <td><strong>{{ $certification->number }}</strong></td>
+                                                        <td>{{ $certification->order->component_code }}-{{ $certification->order->number }}</td>
                                                         <td>{{ $certification->period }}</td>
                                                         <td>{{ $certification->signDateFormat() }}</td>
                                                         <td>
@@ -595,7 +607,7 @@
                                 @else
                                     <div class="acta-empty-state">
                                         <i class="fa-regular fa-folder-open"></i>
-                                        Aún no se generaron actas de medición para esta orden.
+                                        Aún no se generaron actas de medición para este grupo de órdenes.
                                     </div>
                                 @endif
                             </div>
@@ -605,7 +617,7 @@
                         <div class="card acta-card">
                             <div class="acta-card-header">
                                 <h5><i class="fa-solid fa-list-check"></i> Detalle de Rubros - Medición Actual</h5>
-                                <span class="text-muted" style="font-size:12.5px;">Se listan todos los rubros del componente; los que no fueron incluidos en esta orden no permiten cargar medición</span>
+                                <span class="text-muted" style="font-size:12.5px;">Se listan todos los rubros del componente; los que no fueron incluidos en ninguna orden del grupo no permiten cargar medición</span>
                             </div>
                             <div class="acta-card-body">
                                 <div class="dt-responsive table-responsive">
@@ -637,12 +649,12 @@
                                                     </tr>
                                                 @else
                                                     @php
-                                                        $cantidadEjecutar = $cantidadesOrden[$item->rubro_id] ?? 0;
+                                                        $cantidadEjecutar = $cantidadesGrupo[$item->rubro_id] ?? 0;
                                                         $anterior = $anteriores[$item->rubro_id] ?? 0;
                                                     @endphp
                                                     @continue ($cantidadEjecutar > 0 && $anterior >= $cantidadEjecutar)
                                                     @php
-                                                        // Rubros del componente no incluidos en esta orden: se muestran como referencia,
+                                                        // Rubros del componente no incluidos en ninguna orden del grupo: se muestran como referencia,
                                                         // con Cant. Contract. nominal de 1,00 y Cant. a Ejecutar en 0 (no se puede medir).
                                                         $sinOrden = $cantidadEjecutar <= 0;
                                                         $cantidadContrato = $sinOrden ? 1 : ($cantidadesContrato[$item->rubro_id] ?? 0);
@@ -690,7 +702,7 @@
                                                                 data-quantity="{{ $cantidadEjecutar }}"
                                                                 value="0"
                                                                 min="0" required step="any"
-                                                                @if ($sinOrden) disabled title="Este rubro no fue incluido en esta orden" @endif
+                                                                @if ($sinOrden) disabled title="Este rubro no fue incluido en ninguna orden del grupo" @endif
                                                                 oninput="actualizaAcumulado(this);">
                                                         </td>
 
@@ -902,10 +914,10 @@
 
             actualizaContador();
 
-            // Guardar Acta de Medición con AJAX
+            // Guardar Acta de Medición (combinada) con AJAX
             $('#saveButton').click(function() {
                 const $btn = $(this);
-                const orderId = $('#order_id').val();
+                const storeUrl = $('#store_url').val();
                 const monthDate = $('#month_date').val();
                 const signDate = $('#sign_date').val();
                 const number = $('#number').val();
@@ -949,7 +961,7 @@
 
                 swal({
                         title: "Atención",
-                        text: "¿Está seguro que desea grabar esta Acta de Medición?",
+                        text: "¿Está seguro que desea grabar esta Acta de Medición? La cantidad de cada rubro se repartirá entre las órdenes afectadas.",
                         type: "warning",
                         showCancelButton: true,
                         confirmButtonColor: "#DD6B55",
@@ -962,7 +974,7 @@
                         $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin mr-1"></i> Guardando...');
 
                         $.ajax({
-                            url: '/orders/' + orderId + '/item_certifications',
+                            url: storeUrl,
                             type: 'POST',
                             data: {
                                 items: items,
@@ -974,7 +986,9 @@
                             },
                             success: function(response) {
                                 if (response.status === 'success') {
-                                    window.open(response.redirect_url, '_blank');
+                                    (response.redirect_urls || []).forEach(function(url) {
+                                        window.open(url, '_blank');
+                                    });
                                     window.location.href = "{{ route('contracts.volver', $contract->id) }}";
                                 } else {
                                     swal("Error!", response.message, "error");

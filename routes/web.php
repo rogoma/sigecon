@@ -230,6 +230,10 @@ Route::get('contracts/getNotifications', [ContractsController::class, 'getNotifi
      //MODIFICAR PARA MOSTRAR ITEMS O RUBROS DE ORDENES
     Route::get('/orders/{order}/items_contracts/{contract}/component/{component}/itemsCerti', [ItemsContractsController::class, 'indexCerti']);
     Route::post('/orders/{order}/item_certifications', [ItemsContractsController::class, 'storeCerti'])->name('item_certifications.store');
+
+    //PARA MOSTRAR/GENERAR MEDICIÓN COMBINANDO TODAS LAS ÓRDENES "EN CURSO" DE UNA MISMA LOCALIDAD + SUB-COMPONENTE
+    Route::get('/orders/group/contract/{contract}/locality/{locality}/component/{component}/itemsCerti', [ItemsContractsController::class, 'indexCertiGroup'])->name('items_contracts.certi_group');
+    Route::post('/orders/group/contract/{contract}/locality/{locality}/component/{component}/item_certifications', [ItemsContractsController::class, 'storeCertiGroup'])->name('item_certifications.store_group');
     Route::get('/item_certifications/{certification}/pdf', [ItemsContractsController::class, 'certificationPdf'])->name('item_certifications.pdf');
     Route::get('/item_certifications/{certification}/edit', [ItemsContractsController::class, 'editCerti'])->name('item_certifications.edit');
     Route::put('/item_certifications/{certification}', [ItemsContractsController::class, 'updateCerti'])->name('item_certifications.update');

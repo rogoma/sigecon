@@ -119,7 +119,7 @@
             vertical-align: middle;
         }
 
-        .contra-page #items thead th {
+        .contra-page .acta-orders-table thead th {
             background: linear-gradient(135deg, var(--acta-primary) 0%, var(--acta-primary-dark) 100%);
             color: #fff;
             border-color: var(--acta-primary);
@@ -129,8 +129,76 @@
             letter-spacing: .02em;
         }
 
-        .contra-page #items tbody tr:hover {
+        .contra-page .acta-orders-table tbody tr:hover {
             background: #f5fbff;
+        }
+
+        /* ---------- Agrupación Distrito / Localidad / Sub-Componente ---------- */
+        .contra-page .acta-group-distrito {
+            border-left: 5px solid var(--acta-primary-dark);
+            background: #eef5f9;
+            border-radius: 10px;
+            margin: 16px 16px 0 16px;
+            padding-bottom: 12px;
+        }
+
+        .contra-page .acta-group-localidad {
+            border-left: 4px solid var(--acta-accent);
+            background: #f4faff;
+            border-radius: 8px;
+            margin: 10px 16px 0 16px;
+            padding: 10px 12px 12px;
+        }
+
+        .contra-page .acta-group-subcomponente {
+            border-left: 4px solid var(--acta-success);
+            background: #fff;
+            border-radius: 8px;
+            margin: 10px 0 0 12px;
+            padding: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+        }
+
+        .contra-page .acta-group-breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .contra-page .acta-group-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 30px;
+        }
+
+        .contra-page .acta-group-title-distrito {
+            background: var(--acta-primary-dark);
+            color: #fff;
+            font-size: 13.5px;
+        }
+
+        .contra-page .acta-group-title-localidad {
+            background: var(--acta-accent);
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .contra-page .acta-group-title-subcomponente {
+            background: var(--acta-success);
+            color: #fff;
+            font-size: 12.5px;
+        }
+
+        .contra-page .acta-group-footer {
+            padding: 10px 0 0;
+            text-align: right;
+            border-top: 1px dashed #dbe6ec;
+            margin-top: 10px;
         }
 
         .contra-page .badge-pill {
@@ -343,202 +411,232 @@
                                             No hay órdenes de ejecución en estado "En Curso" para este contrato.
                                         </div>
                                     @else
+                                        @php
+                                            // Agrupación multinivel: Distrito -> Localidad -> Sub-Componente
+                                            // Las actas de medición se generan por Localidad + Sub-Componente y pueden abarcar distintos periodos.
+                                            $groupedOrders = $orders->groupBy([
+                                                fn ($order) => $order->district->description,
+                                                fn ($order) => $order->locality->description,
+                                                fn ($order) => $order->component->code . ' - ' . $order->component->description,
+                                            ]);
+                                        @endphp
                                         <div class="acta-card-body p-0">
-                                            <div class="table-responsive">
-                                                <table id="items" class="display table table-striped table-bordered mb-0"
-                                                    style="width:100%">
-                                                    <thead>
-                                                        <tr>                                                            
-                                                            <th>N° OE</th>
-                                                            <th>Fecha Orden</th>
-                                                            <th>Monto Orden</th>
-                                                            <th>Distrito-Localidad</th>
-                                                            <th>Fiscal</th>
-                                                            <th>Sub-Componente</th>                                                            
-                                                            <th>Fecha Acuse</th>
-                                                            <th>Fecha Alerta</th>
-                                                            <th>Plazo Final</th>
-                                                            {{-- <th>Estado</th> --}}
-                                                            <th style="width: 190px; text-align: center;">Acciones</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @foreach ($orders->sortBy('id') as $index => $order)
-                                                            <tr>                                                                
-                                                                <td style="text-align: center;width: 60px;">
-                                                                    {{ $order->component_code }} - {{ $order->number }}
-                                                                </td>
-                                                                <td style="text-align: center;width: 25px;">
-                                                                    {{ date('d/m/Y', strtotime($order->created_at)) }}</td>                                                                
-                                                                <td style="text-align: center;width: 100px;">
-                                                                    {{ $order->totalAmountFormat() }}</td>
-                                                                <td style="text-align: left;width: 120px;">
-                                                                    {{ $order->district->description }} - {{ $order->locality->description }}
-                                                                </td>
-                                                                <td style="color:black;text-align: left;width: 150px;">
-                                                                    {{ $order->creatorUser->name }} {{ $order->creatorUser->lastname }} - {{ $order->creatorUser->position->description }}
-                                                                </td>                                                                    
-                                                                <td style="text-align: left;width: 350px;">
-                                                                    {{ $order->component->code }}-{{ $order->component->description }}
-                                                                </td>
-                                                                {{-- FECHA ACUSE CONTRATISTA --}}
-                                                                <td style="color:#ff0000;text-align: left;width: 25px;">
-                                                                    @if ($order->sign_date)
-                                                                        {{ \Carbon\Carbon::parse($order->sign_date)->format('d/m/Y') }}
-                                                                    @endif
-                                                                </td>
+                                            @foreach ($groupedOrders as $distrito => $localidades)
+                                                <div class="acta-group-distrito">
+                                                    @foreach ($localidades as $localidad => $subcomponentes)
+                                                        <div class="acta-group-localidad">
+                                                            @foreach ($subcomponentes as $subcomponente => $ordersGroup)
+                                                                <div class="acta-group-subcomponente">
+                                                                    <div class="acta-group-breadcrumb">
+                                                                        <span class="acta-group-title acta-group-title-distrito"><i class="fa-solid fa-map"></i> Distrito: {{ $distrito }}</span>
+                                                                        <span class="acta-group-title acta-group-title-localidad"><i class="fa-solid fa-location-dot"></i> Localidad: {{ $localidad }}</span>
+                                                                        <span class="acta-group-title acta-group-title-subcomponente"><i class="fa-solid fa-layer-group"></i> Sub-Componente: {{ $subcomponente }}</span>
+                                                                    </div>
 
-                                                                {{-- FECHA ALERTA 03 DIAS ANTES NO PINTA SI YA ESTA FINALIZADO ESTADO 4 --}}
-                                                                <td style="text-align: left; width: 20px;">
+                                                                    <div class="table-responsive">
+                                                                        <table class="acta-orders-table display table table-striped table-bordered mb-0"
+                                                                            style="width:100%">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>N° OE</th>
+                                                                                    <th>Fecha Orden</th>
+                                                                                    <th>Monto Orden</th>
+                                                                                    <th>Fiscal</th>
+                                                                                    <th>Fecha Acuse</th>
+                                                                                    <th>Fecha Alerta</th>
+                                                                                    <th>Plazo Final</th>
+                                                                                    {{-- <th>Estado</th> --}}
+                                                                                    <th style="width: 190px; text-align: center;">Acciones</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                @foreach ($ordersGroup->sortBy('id') as $order)
+                                                                                    <tr>
+                                                                                        <td style="text-align: center;width: 60px;">
+                                                                                            {{ $order->component_code }} - {{ $order->number }}
+                                                                                        </td>
+                                                                                        <td style="text-align: center;width: 25px;">
+                                                                                            {{ date('d/m/Y', strtotime($order->created_at)) }}</td>
+                                                                                        <td style="text-align: center;width: 100px;">
+                                                                                            {{ $order->totalAmountFormat() }}</td>
+                                                                                        <td style="color:black;text-align: left;width: 150px;">
+                                                                                            {{ $order->creatorUser->name }} {{ $order->creatorUser->lastname }} - {{ $order->creatorUser->position->description }}
+                                                                                        </td>
+                                                                                        {{-- FECHA ACUSE CONTRATISTA --}}
+                                                                                        <td style="color:#ff0000;text-align: left;width: 25px;">
+                                                                                            @if ($order->sign_date)
+                                                                                                {{ \Carbon\Carbon::parse($order->sign_date)->format('d/m/Y') }}
+                                                                                            @endif
+                                                                                        </td>
+
+                                                                                        {{-- FECHA ALERTA 03 DIAS ANTES NO PINTA SI YA ESTA FINALIZADO ESTADO 4 --}}
+                                                                                        <td style="text-align: left; width: 20px;">
+                                                                                            @php
+                                                                                                    $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
+                                                                                                    // Verifica si hay eventos asociados a la orden // Si hay eventos, calcula restando 3 dias la ultima fecha del plazo
+                                                                                                    if ($eventDays) {
+                                                                                                        $ultimoEvento = \App\Models\Event::where('order_id', $order->id)
+                                                                                                        ->orderByDesc('event_date_fin')
+                                                                                                        ->first();
+
+                                                                                                        $fechaCalculada = \Carbon\Carbon::parse($ultimoEvento->event_date_fin)->subDays(3);
+                                                                                                    } else {
+                                                                                                        $fechaCalculada = $order->sign_date ? \Carbon\Carbon::parse($order->sign_date)->addDays($order->plazo - 3) : null;
+                                                                                                    }
+                                                                                            @endphp
+
+                                                                                            @if ($order->sign_date)
+                                                                                                @if ($order->orderState->id == 1 && $fechaCalculada && \Carbon\Carbon::now()->gt($fechaCalculada))
+                                                                                                    {{ $fechaCalculada->format('d/m/Y') }}
+                                                                                                    <span class="badge badge-pill badge-warning">FECHA ALERTA</span>
+                                                                                                @else
+                                                                                                    @php
+                                                                                                        $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
+                                                                                                    @endphp
+
+                                                                                                    @if ($fechaCalculada)
+                                                                                                        {{ $fechaCalculada->format('d/m/Y') }}
+                                                                                                        @if ($eventDays)
+                                                                                                            <span class="badge badge-pill badge-danger">EXTENDIDO</span>
+                                                                                                        @endif
+                                                                                                    @endif
+                                                                                                @endif
+                                                                                            @endif
+                                                                                        </td>
+
+                                                                                        {{-- PLAZO FINAL CALCULA SI FECHA PLAZO ES IGUAL A FECHA ACTUAL Y PONE EN ROJO - NO PINTA SI YA ESTA FINALIZADO ESTADO 4 --}}
+                                                                                        <td style="text-align: left; width: 25px;">
+                                                                                                @php
+                                                                                                    $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
+                                                                                                    // Obtener el último evento asociado a la orden
+
+                                                                                                    // Verifica si hay eventos asociados a la orden // Si hay eventos, muestra la ultima fecha de vencimiento event_date_fin
+                                                                                                    if ($eventDays) {
+                                                                                                        $ultimoEvento = \App\Models\Event::where('order_id', $order->id)
+                                                                                                        ->orderByDesc('event_date_fin')
+                                                                                                        ->first();
+
+                                                                                                        $fechaVencimiento = \Carbon\Carbon::parse($ultimoEvento->event_date_fin);
+                                                                                                    } else {
+                                                                                                        $fechaVencimiento = $order->sign_date ? \Carbon\Carbon::parse($order->sign_date)->addDays($order->plazo) : null;
+                                                                                                    }
+                                                                                                @endphp
+
+                                                                                                @if ($order->sign_date)
+                                                                                                    @if ($order->orderState->id == 1 && $fechaVencimiento && \Carbon\Carbon::now()->gt($fechaVencimiento))
+                                                                                                        {{ $fechaVencimiento->format('d/m/Y') }}
+                                                                                                        <span class="badge badge-pill badge-danger">PLAZO VENCIDO</span>
+                                                                                                    @else
+                                                                                                        @php
+                                                                                                            $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
+                                                                                                        @endphp
+
+                                                                                                        @if ($fechaVencimiento)
+                                                                                                            {{ $fechaVencimiento->format('d/m/Y') }}
+                                                                                                            @if ($eventDays)
+                                                                                                            <span class="badge badge-pill badge-danger">EXTENDIDO</span>
+                                                                                                            @endif
+                                                                                                        @endif
+                                                                                                    @endif
+                                                                                            @endif
+                                                                                        </td>
+
+                                                                                        {{-- Estado: se quitó como columna propia (header comentado más arriba);
+                                                                                             para órdenes ANULADAS ya se muestra "Motivo: ..." en la columna Acciones. --}}
+
+                                                                                        <td>
+                                                                                            {{-- Para mostra datos de acuerdo a estados de la Orden  --}}
+                                                                                            @if (in_array($order->orderState->id, [1]))
+                                                                                                {{-- @if (Auth::user()->hasPermission(['admin.orders.update', 'orders.orders.update']))                                                                             --}}
+                                                                                                    {{-- @if ($order->items->count() > 0)                                                                                 --}}
+                                                                                                        {{-- MOSTRAR PDF DE ORDEN --}}
+                                                                                                        <a href="/pdf/panel_contracts10/{{ $order->id }}"
+                                                                                                            title="Ver Orden" target="_blank"
+                                                                                                            class="btn btn-warning btn-icon"><i
+                                                                                                                class="fa fa-eye"></i></a>
+
+                                                                                                        {{-- El botón "Realizar Medición" se movió debajo de la tabla del Sub-Componente (ver acta-group-footer) --}}
+
+                                                                                                        {{-- INDICA QUE LA ORDEN YA TIENE ACTAS DE MEDICIÓN GENERADAS --}}
+                                                                                                        @if ($order->certifications->count() > 0)
+                                                                                                            <button type="button" title="Ya tiene Actas de Medición generadas"
+                                                                                                                class="btn btn-danger btn-icon"
+                                                                                                                data-toggle="modal" data-target="#modalActas{{ $order->id }}">
+                                                                                                                <i class="fa-solid fa-clipboard-check"></i></button>
+                                                                                                        @endif
+                                                                                                    {{-- @endif                                                                             --}}
+                                                                                                {{-- @endif --}}
+
+                                                                                                {{-- Muestra botones si no son fiscales --}}
+                                                                                                {{-- @if (Auth::user()->hasPermission(['admin.orders.show', 'orders.orders.view']))
+                                                                                                    @if ($order->items->count() > 0)
+                                                                                                        <a href="/pdf/panel_contracts10/{{ $order->id }}"
+                                                                                                            title="Ver Orden" target="_blank"
+                                                                                                            class="btn btn-success btn-icon"><i
+                                                                                                                class="fa fa-eye"></i></a>
+                                                                                                    @endif
+                                                                                                @endif --}}
+                                                                                            @endif
+
+                                                                                            {{-- SI ESTA FINALIZADO --}}
+                                                                                            @if (in_array($order->orderState->id, [4]))
+                                                                                                    <a href="/pdf/panel_contracts10/{{ $order->id }}"
+                                                                                                    title="Ver Orden" target="_blank"
+                                                                                                    class="btn btn-success btn-icon"><i class="fa fa-eye"></i></a>
+
+                                                                                                    <a href="{{ route('orders.file.view', $order->id) }}" title="Ver Archivo de Finalización de Orden" target="_blank" class="btn btn-danger btn-icon"><i class="fa-solid fa-file-pdf"></i></a>
+
+                                                                                                    @if ($order->events->count() > 0)
+                                                                                                    <button type="button" title="Cargar Eventos"
+                                                                                                                class="btn btn-primary btn-icon"
+                                                                                                                onclick="itemEvents({{ $order->id }})"><i
+                                                                                                                    class="fa-solid fa-calendar-days"></i></button>
+                                                                                                    @endif
+                                                                                            @endif
+
+                                                                                            {{-- SI ESTA ANULADO --}}
+                                                                                            @if (in_array($order->orderState->id, [5]))
+                                                                                                <a style="color: red;">Motivo: {{ $order->motivo_anule }}</a>
+                                                                                                    <br>
+                                                                                                    {{-- MOSTRAR PDF DE ORDEN --}}
+                                                                                                    <a href="/pdf/panel_contracts10/{{ $order->id }}"
+                                                                                                    title="Ver Orden" target="_blank"
+                                                                                                    class="btn btn-danger btn-icon"><i
+                                                                                                        class="fa fa-eye"></i></a>
+                                                                                            @endif
+
+                                                                                            {{-- botón para cargar archivos a la orden --}}
+                                                                                            {{-- <button type="button" title="Cargar Archivos"
+                                                                                            class="btn btn-info btn-icon"
+                                                                                            onclick="itemFiles({{ $order->id }})"><i
+                                                                                                class="fa fa-files-o"></i></button> --}}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                @endforeach
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+
                                                                     @php
-                                                                            $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
-                                                                            // Verifica si hay eventos asociados a la orden // Si hay eventos, calcula restando 3 dias la ultima fecha del plazo
-                                                                            if ($eventDays) {
-                                                                                $ultimoEvento = \App\Models\Event::where('order_id', $order->id)
-                                                                                ->orderByDesc('event_date_fin')
-                                                                                ->first();
-
-                                                                                $fechaCalculada = \Carbon\Carbon::parse($ultimoEvento->event_date_fin)->subDays(3);
-                                                                            } else {
-                                                                                $fechaCalculada = $order->sign_date ? \Carbon\Carbon::parse($order->sign_date)->addDays($order->plazo - 3) : null;
-                                                                            }
+                                                                        // Sólo las órdenes "En Curso" (estado 1) pueden generar nuevas Actas de Medición
+                                                                        $ordenesEnCurso = $ordersGroup->filter(fn ($o) => $o->orderState->id == 1);
+                                                                        $primeraOrdenEnCurso = $ordenesEnCurso->first();
                                                                     @endphp
-
-                                                                    @if ($order->sign_date)
-                                                                        @if ($order->orderState->id == 1 && $fechaCalculada && \Carbon\Carbon::now()->gt($fechaCalculada))
-                                                                            {{ $fechaCalculada->format('d/m/Y') }}
-                                                                            <span class="badge badge-pill badge-warning">FECHA ALERTA</span>
-                                                                        @else
-                                                                            @php
-                                                                                $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
-                                                                            @endphp
-
-                                                                            @if ($fechaCalculada)
-                                                                                {{ $fechaCalculada->format('d/m/Y') }}
-                                                                                @if ($eventDays)
-                                                                                    <span class="badge badge-pill badge-danger">EXTENDIDO</span>
-                                                                                @endif
-                                                                            @endif
-                                                                        @endif
+                                                                    @if ($primeraOrdenEnCurso)
+                                                                        <div class="acta-group-footer">
+                                                                            <a href="{{ route('items_contracts.certi_group', [$contract->id, $primeraOrdenEnCurso->locality_id, $primeraOrdenEnCurso->component_id]) }}"
+                                                                                title="Realizar Medición"
+                                                                                class="btn btn-primary btn-icon">
+                                                                                <i class="fa fa-table mr-1"></i> Realizar Medición
+                                                                            </a>
+                                                                        </div>
                                                                     @endif
-                                                                </td>
-
-                                                                {{-- PLAZO FINAL CALCULA SI FECHA PLAZO ES IGUAL A FECHA ACTUAL Y PONE EN ROJO - NO PINTA SI YA ESTA FINALIZADO ESTADO 4 --}}
-                                                                <td style="text-align: left; width: 25px;">
-                                                                        @php
-                                                                            $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
-                                                                            // Obtener el último evento asociado a la orden
-
-                                                                            // Verifica si hay eventos asociados a la orden // Si hay eventos, muestra la ultima fecha de vencimiento event_date_fin
-                                                                            if ($eventDays) {
-                                                                                $ultimoEvento = \App\Models\Event::where('order_id', $order->id)
-                                                                                ->orderByDesc('event_date_fin')
-                                                                                ->first();
-
-                                                                                $fechaVencimiento = \Carbon\Carbon::parse($ultimoEvento->event_date_fin);
-                                                                            } else {
-                                                                                $fechaVencimiento = $order->sign_date ? \Carbon\Carbon::parse($order->sign_date)->addDays($order->plazo) : null;
-                                                                            }
-                                                                        @endphp
-
-                                                                        @if ($order->sign_date)
-                                                                            @if ($order->orderState->id == 1 && $fechaVencimiento && \Carbon\Carbon::now()->gt($fechaVencimiento))
-                                                                                {{ $fechaVencimiento->format('d/m/Y') }}
-                                                                                <span class="badge badge-pill badge-danger">PLAZO VENCIDO</span>
-                                                                            @else
-                                                                                @php
-                                                                                    $eventDays = \App\Models\Event::where('order_id', $order->id)->value('event_days');
-                                                                                @endphp
-
-                                                                                @if ($fechaVencimiento)
-                                                                                    {{ $fechaVencimiento->format('d/m/Y') }}
-                                                                                    @if ($eventDays)
-                                                                                    <span class="badge badge-pill badge-danger">EXTENDIDO</span>
-                                                                                    @endif
-                                                                                @endif
-                                                                            @endif
-                                                                    @endif
-                                                                </td>
-
-                                                                {{-- Estado: se quitó como columna propia (header comentado más arriba);
-                                                                     para órdenes ANULADAS ya se muestra "Motivo: ..." en la columna Acciones. --}}
-
-                                                                <td>
-                                                                    {{-- Para mostra datos de acuerdo a estados de la Orden  --}}
-                                                                    @if (in_array($order->orderState->id, [1]))
-                                                                        {{-- @if (Auth::user()->hasPermission(['admin.orders.update', 'orders.orders.update']))                                                                             --}}
-                                                                            {{-- @if ($order->items->count() > 0)                                                                                 --}}
-                                                                                {{-- MOSTRAR PDF DE ORDEN --}}
-                                                                                <a href="/pdf/panel_contracts10/{{ $order->id }}"
-                                                                                    title="Ver Orden" target="_blank"
-                                                                                    class="btn btn-warning btn-icon"><i
-                                                                                        class="fa fa-eye"></i></a>                                                                                
-
-                                                                                {{-- PARA REALIZAR CERTIFICADOS --}}
-                                                                                    <button type="button" title="Realizar Medición"
-                                                                                        class="btn btn-primary btn-icon"
-                                                                                        onclick="certiOrder({{ $order->id }}, {{ $order->contract->id }}, {{ $order->component->id }})">
-                                                                                        <i class="fa fa-table"></i></button>
-
-                                                                                {{-- INDICA QUE LA ORDEN YA TIENE ACTAS DE MEDICIÓN GENERADAS --}}
-                                                                                @if ($order->certifications->count() > 0)
-                                                                                    <button type="button" title="Ya tiene Actas de Medición generadas"
-                                                                                        class="btn btn-danger btn-icon"
-                                                                                        data-toggle="modal" data-target="#modalActas{{ $order->id }}">
-                                                                                        <i class="fa-solid fa-clipboard-check"></i></button>
-                                                                                @endif
-                                                                            {{-- @endif                                                                             --}}
-                                                                        {{-- @endif --}}
-
-                                                                        {{-- Muestra botones si no son fiscales --}}
-                                                                        {{-- @if (Auth::user()->hasPermission(['admin.orders.show', 'orders.orders.view']))
-                                                                            @if ($order->items->count() > 0)                                                                                
-                                                                                <a href="/pdf/panel_contracts10/{{ $order->id }}"
-                                                                                    title="Ver Orden" target="_blank"
-                                                                                    class="btn btn-success btn-icon"><i
-                                                                                        class="fa fa-eye"></i></a>                                                                                
-                                                                            @endif
-                                                                        @endif --}}
-                                                                    @endif
-
-                                                                    {{-- SI ESTA FINALIZADO --}}
-                                                                    @if (in_array($order->orderState->id, [4]))                                                                         
-                                                                            <a href="/pdf/panel_contracts10/{{ $order->id }}"
-                                                                            title="Ver Orden" target="_blank"
-                                                                            class="btn btn-success btn-icon"><i class="fa fa-eye"></i></a>
-                                                                            
-                                                                            <a href="{{ route('orders.file.view', $order->id) }}" title="Ver Archivo de Finalización de Orden" target="_blank" class="btn btn-danger btn-icon"><i class="fa-solid fa-file-pdf"></i></a>
-
-                                                                            @if ($order->events->count() > 0)
-                                                                            <button type="button" title="Cargar Eventos"
-                                                                                        class="btn btn-primary btn-icon"
-                                                                                        onclick="itemEvents({{ $order->id }})"><i                                                                                        
-                                                                                            class="fa-solid fa-calendar-days"></i></button>
-                                                                            @endif
-                                                                    @endif                                                                    
-
-                                                                    {{-- SI ESTA ANULADO --}}
-                                                                    @if (in_array($order->orderState->id, [5]))                                                                        
-                                                                        <a style="color: red;">Motivo: {{ $order->motivo_anule }}</a>
-                                                                            <br>
-                                                                            {{-- MOSTRAR PDF DE ORDEN --}}
-                                                                            <a href="/pdf/panel_contracts10/{{ $order->id }}"
-                                                                            title="Ver Orden" target="_blank"
-                                                                            class="btn btn-danger btn-icon"><i
-                                                                                class="fa fa-eye"></i></a>                                                                                
-                                                                    @endif
-
-                                                                    {{-- botón para cargar archivos a la orden --}}
-                                                                    {{-- <button type="button" title="Cargar Archivos"
-                                                                    class="btn btn-info btn-icon"
-                                                                    onclick="itemFiles({{ $order->id }})"><i                                                                                        
-                                                                        class="fa fa-files-o"></i></button> --}}
-                                                                </td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endforeach
                                         </div>
                                     @endif
 
@@ -628,25 +726,27 @@
     <script type="text/javascript">
         $(document).ready(function() {
 
-            $('#items').DataTable({
-                "responsive": true,
-                "autoWidth": false,
-                "language": {
-                    "search": "Buscar orden:",
-                    "lengthMenu": "Mostrar _MENU_ órdenes",
-                    "info": "Mostrando _START_ a _END_ de _TOTAL_ órdenes",
-                    "infoEmpty": "Sin órdenes en curso",
-                    "zeroRecords": "No se encontraron órdenes",
-                    "paginate": { "previous": "Anterior", "next": "Siguiente" }
-                },
-                "columnDefs": [
-                    // Prioridad de columnas al colapsar en pantallas angostas: N° OE y Acciones se mantienen visibles
-                    { "responsivePriority": 1, "targets": 9 },  // Acciones
-                    { "responsivePriority": 2, "targets": 0 },  // N° OE
-                    { "responsivePriority": 3, "targets": 5 },  // Sub-Componente
-                    { "responsivePriority": 4, "targets": 2 },  // Monto Orden
-                    { "responsivePriority": 10, "targets": [1, 3, 4, 6, 7, 8] },
-                ],
+            // Una tabla por cada grupo Distrito -> Localidad -> Sub-Componente
+            $('.acta-orders-table').each(function() {
+                $(this).DataTable({
+                    "responsive": true,
+                    "autoWidth": false,
+                    "language": {
+                        "search": "Buscar orden:",
+                        "lengthMenu": "Mostrar _MENU_ órdenes",
+                        "info": "Mostrando _START_ a _END_ de _TOTAL_ órdenes",
+                        "infoEmpty": "Sin órdenes en curso",
+                        "zeroRecords": "No se encontraron órdenes",
+                        "paginate": { "previous": "Anterior", "next": "Siguiente" }
+                    },
+                    "columnDefs": [
+                        // Prioridad de columnas al colapsar en pantallas angostas: N° OE y Acciones se mantienen visibles
+                        { "responsivePriority": 1, "targets": 6 },  // Acciones
+                        { "responsivePriority": 2, "targets": 0 },  // N° OE
+                        { "responsivePriority": 3, "targets": 2 },  // Monto Orden
+                        { "responsivePriority": 10, "targets": [1, 3, 4, 5] },
+                    ],
+                });
             });
 
 
@@ -907,11 +1007,6 @@
             // itemContraRubro = function(order, contract, component) {
             //     location.href = '/orders/' + order + '/items_contracts/' + contract + '/component/' + component + '/itemsRubros';
             // }
-
-            //lleva a indexRubros de ItemsContractsController
-            certiOrder = function(order, contract, component) {
-                location.href = '/orders/' + order + '/items_contracts/' + contract + '/component/' + component + '/itemsCerti';
-            }
 
             //lleva a index de ItemsContractsController
             itemRubro = function(contract, component) {
