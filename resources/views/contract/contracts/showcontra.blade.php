@@ -691,7 +691,7 @@
                                                                                                 <td class="text-right">
                                                                                                     <a href="{{ route('item_certifications.pdf', $fila['certification']->id) }}"
                                                                                                         target="_blank" rel="noopener" class="acta-pdf-link">
-                                                                                                        <i class="fa-solid fa-file-pdf"></i> Ver PDF
+                                                                                                        <i class="fa-solid fa-file-pdf"></i> Ver Acta
                                                                                                     </a>
                                                                                                     @if ($fila['certification']->state_id == \App\Models\ItemCertification::STATE_EMITIDO)
                                                                                                         <a href="{{ route('items_contracts.certi_group', [$contract->id, $ordersGroup->first()->locality_id, $ordersGroup->first()->component_id]) }}?acta={{ $fila['certification']->id }}"
@@ -699,7 +699,7 @@
                                                                                                             <i class="fa-solid fa-pen"></i>
                                                                                                         </a>
                                                                                                         <button type="button" class="btn btn-success btn-icon"
-                                                                                                            title="Aprobar Acta" onclick="aprobarActa({{ $fila['certification']->id }})">
+                                                                                                            title="Validar Acta" onclick="validarActa({{ $fila['certification']->id }})">
                                                                                                             <i class="fa-solid fa-check"></i>
                                                                                                         </button>
                                                                                                     @else
@@ -1060,14 +1060,14 @@
 
             // Aprueba una Acta de Medición (y toda su tanda, si abarca más de una Orden de Ejecución).
             // Una vez aprobada queda bloqueada: ya no se puede editar ni volver a grabar.
-            aprobarActa = function(certificationId) {
+            validarActa = function(certificationId) {
                 swal({
                         title: "Atención",
-                        text: "¿Está seguro que desea aprobar esta Acta de Medición? Una vez aprobada ya no podrá editarla.",
+                        text: "¿Está seguro que desea validar esta Acta de Medición? Una vez validada ya no podrá editarla.",
                         type: "warning",
                         showCancelButton: true,
                         confirmButtonColor: "#DD6B55",
-                        confirmButtonText: "Sí, aprobar",
+                        confirmButtonText: "Sí, validar",
                         cancelButtonText: "Cancelar",
                     },
                     function(isConfirm) {

@@ -24,6 +24,7 @@ class ItemCertification extends Model
         'creator_user_id',
         'state_id',
         'contratista_representative',
+        'fiscalizacion_representative',
     ];
 
     public function order()

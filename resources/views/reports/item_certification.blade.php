@@ -37,9 +37,16 @@
         width: 100%;
         margin-top: 10px;
     }
+    /* Repite el encabezado de la tabla en cada página y evita que una fila se corte entre dos páginas */
+    thead {
+        display: table-header-group;
+    }
+    tr {
+        page-break-inside: avoid;
+    }
     td, th {
         border: 1px solid #000;
-        padding: 3px 5px;
+        padding: 2px 4px;
     }
     th {
         text-align: center;
@@ -63,15 +70,28 @@
         font-weight: bold;
         text-align: left;
     }
+    .firmas {
+        page-break-inside: avoid;
+    }
 </style>
 <body>
     <header>
-        <img src="img/logoVI_2.png" alt="Logo" style="height: 65px;">
+        <img src="{{ public_path('img/logoVI_2.png') }}" alt="Logo" style="height: 65px;">
     </header>
 
-    <footer>
-        Página <span class="page"></span> de <span class="topage"></span>
-    </footer>
+    <footer></footer>
+
+    <script type="text/php">
+        if (isset($pdf)) {
+            $texto = "Página {PAGE_NUM} de {PAGE_COUNT}";
+            $fuente = $fontMetrics->getFont("arial", "normal");
+            $tamanio = 9;
+            $ancho = $fontMetrics->getTextWidth($texto, $fuente, $tamanio);
+            $x = ($pdf->get_width() - $ancho) / 2;
+            $y = $pdf->get_height() - 25;
+            $pdf->page_text($x, $y, $texto, $fuente, $tamanio, [0.47, 0.47, 0.47]);
+        }
+    </script>
 
     <h2>MINISTERIO DE SALUD PÚBLICA Y BIENESTAR SOCIAL</h2>
     <h2>SERVICIO NACIONAL DE SANEMIENTO AMBIENTAL (SENASA)</h2>
@@ -85,9 +105,9 @@
     <h4 style="text-align: left;">ACTA DE MEDICIÓN</h4>
 <h4 style="text-align: left;">PLANILLA N° {{ $order->component->componentType->code }}-{{ $order->component->componentType->description }}</h4>
     @if ($esMultiOrden)
-        <h4 style="text-align: left;">
+        {{-- <h4 style="text-align: left;">
             ÓRDENES DE EJECUCIÓN: {{ $ordenesReferenciadas->map(fn ($o) => $o->component_code . '-' . $o->number)->implode(', ') }}
-        </h4>
+        </h4> --}}
     @endif
 
     <div class="datos-generales">
@@ -98,11 +118,10 @@
             {{-- a los {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }}, --}}
             <strong>a los {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('D') }} días del mes de {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('MMMM') }} de {{ \Carbon\Carbon::parse($certification->sign_date)->locale('es')->isoFormat('YYYY') }}</strong>,
             en presencia del
-            @if ($order->creatorUser)
-                <strong>{{ $order->creatorUser->position->description }}
-                {{ $order->creatorUser->name }} {{ $order->creatorUser->lastname }}</strong>
+            @if ($certification->fiscalizacion_representative)
+                <strong>{{ $certification->fiscalizacion_representative }}</strong>
             @else
-                (sin fiscal asignado)
+                (sin representante asignado)
             @endif
             representante de la fiscalización y
             @if ($certification->contratista_representative)
@@ -168,8 +187,8 @@
                         <td style="text-align: center;">{{ $item->rubro->orderPresentations->description }}</td>
                         <td style="text-align: right;">{{ ($tieneMdo && $anterior > 0) ? number_format($anterior, 2, ',', '.') : '-' }}</td>
                         <td style="text-align: right;">{{ ($tieneMat && $anterior > 0) ? number_format($anterior, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right;">{{ ($tieneMdo && $actual > 0) ? number_format($actual, 2, ',', '.') : '-' }}</td>
-                        <td style="text-align: right;">{{ ($tieneMat && $actual > 0) ? number_format($actual, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right; font-weight: bold;">{{ ($tieneMdo && $actual > 0) ? number_format($actual, 2, ',', '.') : '-' }}</td>
+                        <td style="text-align: right; font-weight: bold;">{{ ($tieneMat && $actual > 0) ? number_format($actual, 2, ',', '.') : '-' }}</td>
                         <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ ($tieneMdo && $acumulado > 0) ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
                         <td style="text-align: right; {{ $excedeSaldo ? 'background-color: #ffe066;' : '' }}">{{ ($tieneMat && $acumulado > 0) ? number_format($acumulado, 2, ',', '.') : '-' }}</td>
                     </tr>
@@ -179,7 +198,7 @@
     </table>
 
     <br><br>
-    <table style="border: none; width: 100%;">
+    <table class="firmas" style="border: none; width: 100%;">
         <tr style="border: none;">
             <td style="border: none; text-align: center; width: 50%;">
                 _____________________________<br>

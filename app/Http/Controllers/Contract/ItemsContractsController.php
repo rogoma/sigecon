@@ -225,6 +225,7 @@ class ItemsContractsController extends Controller
                 'period' => $certificacionEditar->period,
                 'sign_date' => \Carbon\Carbon::parse($certificacionEditar->sign_date)->format('d/m/Y'),
                 'contratista_representative' => $certificacionEditar->contratista_representative,
+                'fiscalizacion_representative' => $certificacionEditar->fiscalizacion_representative,
                 'valores' => $valoresEdicion,
             ];
         }
@@ -284,6 +285,7 @@ class ItemsContractsController extends Controller
             'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
             'sign_date' => 'required|date_format:d/m/Y',
             'contratista_representative' => 'required|string|max:150',
+            'fiscalizacion_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
             'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
@@ -292,6 +294,7 @@ class ItemsContractsController extends Controller
             'number.unique' => 'Ya existe una Acta de Medición con ese N° de Planilla para esta orden.',
             'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'fiscalizacion_representative.required' => 'Debe ingresar el nombre del representante de la Fiscalización.',
             'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -322,6 +325,7 @@ class ItemsContractsController extends Controller
             'creator_user_id' => $request->user()->id,
             'state_id' => ItemCertification::STATE_EMITIDO,
             'contratista_representative' => $request->input('contratista_representative'),
+            'fiscalizacion_representative' => $request->input('fiscalizacion_representative'),
         ]);
 
         foreach ($items as $item) {
@@ -375,6 +379,7 @@ class ItemsContractsController extends Controller
             'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
             'sign_date' => 'required|date_format:d/m/Y',
             'contratista_representative' => 'required|string|max:150',
+            'fiscalizacion_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
             'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
@@ -382,6 +387,7 @@ class ItemsContractsController extends Controller
         $messages = [
             'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'fiscalizacion_representative.required' => 'Debe ingresar el nombre del representante de la Fiscalización.',
             'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -418,13 +424,14 @@ class ItemsContractsController extends Controller
         $creatorUserId = $request->user()->id;
         $period = $request->input('month_date');
         $contratistaRepresentative = $request->input('contratista_representative');
+        $fiscalizacionRepresentative = $request->input('fiscalizacion_representative');
 
         // Identifica esta "tanda" de Actas, generadas juntas a partir de una misma medición combinada.
         // Con ella el PDF de cada Acta puede reconocer que corresponde a más de una Orden de Ejecución
         // y mostrar los valores Anterior/Actual/Acumulado agregados de todo el grupo.
         $batchUuid = (string) Str::uuid();
 
-        $certifications = DB::transaction(function () use ($detallesPorOrden, $batchUuid, $number, $period, $signDate, $creatorUserId, $contratistaRepresentative) {
+        $certifications = DB::transaction(function () use ($detallesPorOrden, $batchUuid, $number, $period, $signDate, $creatorUserId, $contratistaRepresentative, $fiscalizacionRepresentative) {
             $created = [];
             foreach ($detallesPorOrden as $orderId => $rubros) {
                 $certification = ItemCertification::create([
@@ -436,6 +443,7 @@ class ItemsContractsController extends Controller
                     'creator_user_id' => $creatorUserId,
                     'state_id' => ItemCertification::STATE_EMITIDO,
                     'contratista_representative' => $contratistaRepresentative,
+                    'fiscalizacion_representative' => $fiscalizacionRepresentative,
                 ]);
 
                 foreach ($rubros as $rubroId => $quantity) {
@@ -529,6 +537,7 @@ class ItemsContractsController extends Controller
             'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
             'sign_date' => 'required|date_format:d/m/Y',
             'contratista_representative' => 'required|string|max:150',
+            'fiscalizacion_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
             'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
@@ -536,6 +545,7 @@ class ItemsContractsController extends Controller
         $messages = [
             'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'fiscalizacion_representative.required' => 'Debe ingresar el nombre del representante de la Fiscalización.',
             'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -573,6 +583,7 @@ class ItemsContractsController extends Controller
         $signDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->input('sign_date'))->format('Y-m-d');
         $period = $request->input('month_date');
         $contratistaRepresentative = $request->input('contratista_representative');
+        $fiscalizacionRepresentative = $request->input('fiscalizacion_representative');
 
         // Si la Acta original no tenía batch_uuid (fue creada por orden individual) y ahora el reparto
         // requiere más de una orden, se genera uno nuevo para que el PDF pueda agrupar la tanda completa.
@@ -580,7 +591,7 @@ class ItemsContractsController extends Controller
 
         $certificacionesPorOrden = $certificacionesTanda->keyBy('order_id');
 
-        $resultado = DB::transaction(function () use ($detallesPorOrden, $certificacionesPorOrden, $batchUuid, $number, $period, $signDate, $contratistaRepresentative, $request) {
+        $resultado = DB::transaction(function () use ($detallesPorOrden, $certificacionesPorOrden, $batchUuid, $number, $period, $signDate, $contratistaRepresentative, $fiscalizacionRepresentative, $request) {
             $vigentesIds = [];
 
             foreach ($detallesPorOrden as $orderId => $rubros) {
@@ -593,6 +604,7 @@ class ItemsContractsController extends Controller
                         'period' => $period,
                         'sign_date' => $signDate,
                         'contratista_representative' => $contratistaRepresentative,
+                        'fiscalizacion_representative' => $fiscalizacionRepresentative,
                     ]);
                     $cert->details()->delete();
                 } else {
@@ -605,6 +617,7 @@ class ItemsContractsController extends Controller
                         'creator_user_id' => $request->user()->id,
                         'state_id' => ItemCertification::STATE_EMITIDO,
                         'contratista_representative' => $contratistaRepresentative,
+                        'fiscalizacion_representative' => $fiscalizacionRepresentative,
                     ]);
                 }
 
@@ -724,6 +737,7 @@ class ItemsContractsController extends Controller
                 'period' => $certification->period,
                 'sign_date' => \Carbon\Carbon::parse($certification->sign_date)->format('d/m/Y'),
                 'contratista_representative' => $certification->contratista_representative,
+                'fiscalizacion_representative' => $certification->fiscalizacion_representative,
             ],
             'rubros' => $rubros,
         ]);
@@ -761,6 +775,7 @@ class ItemsContractsController extends Controller
             'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
             'sign_date' => 'required|date_format:d/m/Y',
             'contratista_representative' => 'required|string|max:150',
+            'fiscalizacion_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
             'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
@@ -769,6 +784,7 @@ class ItemsContractsController extends Controller
             'number.unique' => 'Ya existe otra Acta de Medición con ese N° de Planilla para esta orden.',
             'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'fiscalizacion_representative.required' => 'Debe ingresar el nombre del representante de la Fiscalización.',
             'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -793,6 +809,7 @@ class ItemsContractsController extends Controller
             'period' => $request->input('month_date'),
             'sign_date' => \Carbon\Carbon::createFromFormat('d/m/Y', $request->input('sign_date'))->format('Y-m-d'),
             'contratista_representative' => $request->input('contratista_representative'),
+            'fiscalizacion_representative' => $request->input('fiscalizacion_representative'),
         ]);
 
         // Reemplazamos el detalle de rubros medidos por el nuevo detalle enviado
@@ -990,9 +1007,11 @@ class ItemsContractsController extends Controller
             ->get();
 
         $pdf = App::make('dompdf.wrapper');
+        // Habilita el motor de PHP embebido de dompdf, requerido para numerar las páginas (Página X de Y) en el pie
+        $pdf->setOptions(['isPhpEnabled' => true]);
         $view = View::make('reports.item_certification', compact('certification', 'order', 'contract', 'anteriores', 'actuales', 'rubros', 'cantidadesOrden', 'esMultiOrden', 'ordenesReferenciadas'))->render();
         $pdf->loadHTML($view);
-        return $pdf->stream('Acta_Certificacion_N' . $certification->number . '.pdf');
+        return $pdf->stream('Acta_Medición_N' . $certification->number . '.pdf');
     }
 
     public function getItems(Request $request)

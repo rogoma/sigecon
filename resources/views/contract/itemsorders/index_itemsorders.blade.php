@@ -510,7 +510,7 @@
                                         <div class="invalid-feedback d-block" id="month_date_feedback" style="display:none;"></div>
                                     </div>
 
-                                    <div class="col-12 col-sm-4 col-lg-3 acta-field">
+                                    <div class="col-12 col-sm-4 col-lg-2 acta-field mb-3 mb-lg-0">
                                         <label for="number">N° Planilla de Certificación</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
@@ -526,7 +526,24 @@
                                         <div class="invalid-feedback d-block" id="number_feedback" style="display:none;"></div>
                                     </div>
 
-                                    <div class="col-12 col-lg-5 acta-field mt-3 mt-lg-0">
+                                    <div class="col-12 col-sm-6 col-lg-3 acta-field mb-3 mb-lg-0">
+                                        <label for="fiscalizacion_representative">Representante de Fiscalización</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa-solid fa-user-shield"></i></span>
+                                            </div>
+                                            <input type="text" id="fiscalizacion_representative" name="fiscalizacion_representative"
+                                                placeholder="Nombre y apellido"
+                                                class="form-control @error('fiscalizacion_representative') is-invalid @enderror"
+                                                value="{{ old('fiscalizacion_representative') }}">
+                                        </div>
+                                        @error('fiscalizacion_representative')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                        <div class="invalid-feedback d-block" id="fiscalizacion_feedback" style="display:none;"></div>
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-3 acta-field">
                                         <label for="contratista_representative">Representante de la Contratista</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
@@ -584,9 +601,6 @@
                                                     @php
                                                         $cantidadEjecutar = $cantidadesOrden[$item->rubro_id] ?? 0;
                                                         $anterior = $anteriores[$item->rubro_id] ?? 0;
-                                                    @endphp
-                                                    @continue ($cantidadEjecutar > 0 && $anterior >= $cantidadEjecutar)
-                                                    @php
                                                         // Rubros del componente no incluidos en esta orden: se muestran como referencia,
                                                         // con Cant. Contract. nominal de 1,00 y Cant. a Ejecutar en 0 (no se puede medir).
                                                         $sinOrden = $cantidadEjecutar <= 0;
@@ -714,6 +728,17 @@
                 return false;
             }
             limpiarErrorCampo($('#contratista_representative'), $('#representative_feedback'));
+            return true;
+        }
+
+        // Valida en vivo (al perder el foco) que el Representante de Fiscalización no quede vacío
+        function validarFiscalizacion() {
+            const representante = $('#fiscalizacion_representative').val().trim();
+            if (!representante) {
+                mostrarErrorCampo($('#fiscalizacion_representative'), $('#fiscalizacion_feedback'), 'Debe ingresar el nombre del Representante de Fiscalización.');
+                return false;
+            }
+            limpiarErrorCampo($('#fiscalizacion_representative'), $('#fiscalizacion_feedback'));
             return true;
         }
 
@@ -855,6 +880,7 @@
             $('#month_date, #sign_date').on('blur change', validarPeriodo);
             $('#number').on('blur input', validarNumeroPlanilla);
             $('#contratista_representative').on('blur', validarRepresentante);
+            $('#fiscalizacion_representative').on('blur', validarFiscalizacion);
 
             // Guardar Acta de Medición con AJAX
             $('#saveButton').click(function() {
@@ -864,6 +890,7 @@
                 const signDate = $('#sign_date').val();
                 const number = $('#number').val();
                 const contratistaRepresentative = $('#contratista_representative').val().trim();
+                const fiscalizacionRepresentative = $('#fiscalizacion_representative').val().trim();
 
                 if (!number || parseInt(number, 10) < 1) {
                     swal("Atención", "Debe ingresar el N° de Planilla de Certificación.", "warning");
@@ -882,6 +909,11 @@
 
                 if (!contratistaRepresentative) {
                     swal("Atención", "Debe ingresar el nombre del Representante de la Contratista.", "warning");
+                    return;
+                }
+
+                if (!fiscalizacionRepresentative) {
+                    swal("Atención", "Debe ingresar el nombre del Representante de Fiscalización.", "warning");
                     return;
                 }
 
@@ -930,6 +962,7 @@
                                 month_date: monthDate,
                                 sign_date: signDate,
                                 contratista_representative: contratistaRepresentative,
+                                fiscalizacion_representative: fiscalizacionRepresentative,
                                 _token: $('meta[name="csrf-token"]').attr('content'),
                             },
                             success: function(response) {
