@@ -369,7 +369,7 @@ class ContractsController extends Controller
     public function show(Request $request, $contract_id)
     {
         // Para acceder a eventos y localidades de las órdenes de un contrato
-        $contract = Contract::with('orders.events', 'orders.locality')->findOrFail($contract_id);
+        $contract = Contract::with('orders.events', 'orders.locality', 'orders.certifications')->findOrFail($contract_id);
         
         // Obtener las órdenes del contrato de acuerdo al rol
         $role_user = $request->user()->role_id;

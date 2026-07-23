@@ -232,6 +232,45 @@
             color: #cbd7de;
         }
 
+        .contra-page .acta-empty-state.acta-empty-state-sm {
+            padding: 16px 10px;
+        }
+
+        .contra-page .acta-empty-state.acta-empty-state-sm i {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        /* ---------- Actas de Medición por Localidad/Sub-Componente ---------- */
+        .contra-page .acta-certifications-wrap {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed #dbe6ec;
+        }
+
+        .contra-page .acta-certifications-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--acta-primary-dark);
+            margin-bottom: 8px;
+        }
+
+        .contra-page .acta-certifications-table thead th {
+            background: #eef5f9;
+            color: var(--acta-primary-dark);
+            border-color: #dbe6ec;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        .contra-page .acta-certifications-table tbody tr:hover {
+            background: #f7fbfd;
+        }
+
         /* ---------- Botón agregar orden ---------- */
         .contra-page .acta-actionbar {
             padding: 16px 20px;
@@ -547,25 +586,12 @@
                                                                                         <td>
                                                                                             {{-- Para mostra datos de acuerdo a estados de la Orden  --}}
                                                                                             @if (in_array($order->orderState->id, [1]))
-                                                                                                {{-- @if (Auth::user()->hasPermission(['admin.orders.update', 'orders.orders.update']))                                                                             --}}
-                                                                                                    {{-- @if ($order->items->count() > 0)                                                                                 --}}
-                                                                                                        {{-- MOSTRAR PDF DE ORDEN --}}
-                                                                                                        <a href="/pdf/panel_contracts10/{{ $order->id }}"
-                                                                                                            title="Ver Orden" target="_blank"
-                                                                                                            class="btn btn-warning btn-icon"><i
-                                                                                                                class="fa fa-eye"></i></a>
-
-                                                                                                        {{-- El botón "Realizar Medición" se movió debajo de la tabla del Sub-Componente (ver acta-group-footer) --}}
-
-                                                                                                        {{-- INDICA QUE LA ORDEN YA TIENE ACTAS DE MEDICIÓN GENERADAS --}}
-                                                                                                        @if ($order->certifications->count() > 0)
-                                                                                                            <button type="button" title="Ya tiene Actas de Medición generadas"
-                                                                                                                class="btn btn-danger btn-icon"
-                                                                                                                data-toggle="modal" data-target="#modalActas{{ $order->id }}">
-                                                                                                                <i class="fa-solid fa-clipboard-check"></i></button>
-                                                                                                        @endif
-                                                                                                    {{-- @endif                                                                             --}}
-                                                                                                {{-- @endif --}}
+                                                                                                {{-- Columna Acciones: sólo el ícono del ojo, que lleva al PDF de la Orden de Ejecución.
+                                                                                                     Las Actas de Medición generadas se listan debajo de la tabla, agrupadas por Localidad/Sub-Componente. --}}
+                                                                                                <a href="/pdf/panel_contracts10/{{ $order->id }}"
+                                                                                                    title="Ver Orden" target="_blank"
+                                                                                                    class="btn btn-warning btn-icon"><i
+                                                                                                        class="fa fa-eye"></i></a>
 
                                                                                                 {{-- Muestra botones si no son fiscales --}}
                                                                                                 {{-- @if (Auth::user()->hasPermission(['admin.orders.show', 'orders.orders.view']))
@@ -618,6 +644,59 @@
                                                                     </div>
 
                                                                     @php
+                                                                        // Actas de Medición de todas las órdenes de este grupo (Localidad + Sub-Componente),
+                                                                        // ordenadas por N° de Planilla, conservando la orden dueña de cada acta.
+                                                                        $actasGrupo = collect();
+                                                                        foreach ($ordersGroup as $ordenActa) {
+                                                                            foreach ($ordenActa->certifications as $certificacion) {
+                                                                                $actasGrupo->push(['order' => $ordenActa, 'certification' => $certificacion]);
+                                                                            }
+                                                                        }
+                                                                        $actasGrupo = $actasGrupo->sortBy(fn ($fila) => $fila['certification']->number)->values();
+                                                                    @endphp
+                                                                    <div class="acta-certifications-wrap">
+                                                                        <div class="acta-certifications-title">
+                                                                            <i class="fa-solid fa-clipboard-check"></i> Actas de Medición - {{ $localidad }} / {{ $subcomponente }}
+                                                                        </div>
+                                                                        @if ($actasGrupo->isEmpty())
+                                                                            <div class="acta-empty-state acta-empty-state-sm">
+                                                                                <i class="fa-regular fa-folder-open"></i>
+                                                                                Aún no se generaron Actas de Medición para esta Localidad / Sub-Componente.
+                                                                            </div>
+                                                                        @else
+                                                                            <div class="table-responsive">
+                                                                                <table class="acta-certifications-table display table table-striped table-bordered mb-0" style="width:100%">
+                                                                                    <thead>
+                                                                                        <tr>
+                                                                                            <th>N° Planilla</th>
+                                                                                            <th>Orden</th>
+                                                                                            <th>Período</th>
+                                                                                            <th>Fecha Medición</th>
+                                                                                            <th class="text-right">PDF</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+                                                                                        @foreach ($actasGrupo as $fila)
+                                                                                            <tr>
+                                                                                                <td><strong>{{ $fila['certification']->number }}</strong></td>
+                                                                                                <td>{{ $fila['order']->component_code }}-{{ $fila['order']->number }}</td>
+                                                                                                <td>{{ $fila['certification']->period }}</td>
+                                                                                                <td>{{ $fila['certification']->signDateFormat() }}</td>
+                                                                                                <td class="text-right">
+                                                                                                    <a href="{{ route('item_certifications.pdf', $fila['certification']->id) }}"
+                                                                                                        target="_blank" rel="noopener" class="acta-pdf-link">
+                                                                                                        <i class="fa-solid fa-file-pdf"></i> Ver PDF
+                                                                                                    </a>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        @endforeach
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                        @endif
+                                                                    </div>
+
+                                                                    @php
                                                                         // Sólo las órdenes "En Curso" (estado 1) pueden generar nuevas Actas de Medición
                                                                         $ordenesEnCurso = $ordersGroup->filter(fn ($o) => $o->orderState->id == 1);
                                                                         $primeraOrdenEnCurso = $ordenesEnCurso->first();
@@ -667,58 +746,6 @@
             </div>
         </div>
 
-        {{-- MODALES DE VISUALIZACIÓN DE ACTAS DE MEDICIÓN YA GENERADAS POR ORDEN --}}
-        @foreach ($orders as $order)
-            @if ($order->certifications->count() > 0)
-                <div class="modal fade" id="modalActas{{ $order->id }}" tabindex="-1" role="dialog" aria-labelledby="modalActasLabel{{ $order->id }}" aria-hidden="true">
-                    <div class="modal-dialog modal-lg" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="modalActasLabel{{ $order->id }}">
-                                    <i class="fa-solid fa-clipboard-check mr-1"></i>
-                                    Actas de Medición - Orden N° {{ $order->component->code }}-{{ $order->number }}
-                                </h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-sm mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>N° Planilla</th>
-                                                <th>Período</th>
-                                                <th>Fecha Medición</th>
-                                                <th class="text-right">PDF</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($order->certifications->sortBy('number') as $certification)
-                                                <tr>
-                                                    <td><strong>{{ $certification->number }}</strong></td>
-                                                    <td>{{ $certification->period }}</td>
-                                                    <td>{{ $certification->signDateFormat() }}</td>
-                                                    <td class="text-right">
-                                                        <a href="{{ route('item_certifications.pdf', $certification->id) }}"
-                                                            target="_blank" rel="noopener" class="acta-pdf-link">
-                                                            <i class="fa-solid fa-file-pdf"></i> Ver PDF
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        @endforeach
     </div>
 @endsection
 
@@ -746,6 +773,22 @@
                         { "responsivePriority": 3, "targets": 2 },  // Monto Orden
                         { "responsivePriority": 10, "targets": [1, 3, 4, 5] },
                     ],
+                });
+            });
+
+            // Una tabla de Actas de Medición por cada grupo Distrito -> Localidad -> Sub-Componente
+            $('.acta-certifications-table').each(function() {
+                $(this).DataTable({
+                    "responsive": true,
+                    "autoWidth": false,
+                    "language": {
+                        "search": "Buscar acta:",
+                        "lengthMenu": "Mostrar _MENU_ actas",
+                        "info": "Mostrando _START_ a _END_ de _TOTAL_ actas",
+                        "infoEmpty": "Sin actas de medición",
+                        "zeroRecords": "No se encontraron actas",
+                        "paginate": { "previous": "Anterior", "next": "Siguiente" }
+                    },
                 });
             });
 

@@ -84,6 +84,11 @@
     <BR></BR>
     <h4 style="text-align: left;">ACTA DE MEDICIÓN</h4>
 <h4 style="text-align: left;">PLANILLA N° {{ $order->component->componentType->code }}-{{ $order->component->componentType->description }}</h4>
+    @if ($esMultiOrden)
+        <h4 style="text-align: left;">
+            ÓRDENES DE EJECUCIÓN: {{ $ordenesReferenciadas->map(fn ($o) => $o->component_code . '-' . $o->number)->implode(', ') }}
+        </h4>
+    @endif
 
     <div class="datos-generales">
         <p>

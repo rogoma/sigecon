@@ -29,6 +29,7 @@ use Mpdf\Mpdf;
 use Barryvdh\DomPDF\Facade as Pdf;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 
 
 class ItemsContractsController extends Controller
@@ -241,12 +242,13 @@ class ItemsContractsController extends Controller
             'contratista_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
-            'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
         ];
         $messages = [
             'number.unique' => 'Ya existe una Acta de Medición con ese N° de Planilla para esta orden.',
             'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
@@ -331,11 +333,12 @@ class ItemsContractsController extends Controller
             'contratista_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
-            'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
         ];
         $messages = [
             'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
@@ -399,16 +402,17 @@ class ItemsContractsController extends Controller
                 if ($saldoOrden <= 0) {
                     continue;
                 }
-                $aplicar = min($restante, $saldoOrden);
-                $detallesPorOrden[$order->id][$rubroId] = ($detallesPorOrden[$order->id][$rubroId] ?? 0) + $aplicar;
-                $restante -= $aplicar;
+                // Redondeamos a 2 decimales en cada paso para evitar arrastre de error de punto flotante
+                $aplicar = round(min($restante, $saldoOrden), 2);
+                $detallesPorOrden[$order->id][$rubroId] = round(($detallesPorOrden[$order->id][$rubroId] ?? 0) + $aplicar, 2);
+                $restante = round($restante - $aplicar, 2);
             }
 
             // Excedente sin saldo en ninguna orden del grupo: se registra contra la orden más reciente
             // (permite exceder saldo, igual que la carga por orden individual)
             if ($restante > 0) {
                 $ordenMasReciente = $orders->last();
-                $detallesPorOrden[$ordenMasReciente->id][$rubroId] = ($detallesPorOrden[$ordenMasReciente->id][$rubroId] ?? 0) + $restante;
+                $detallesPorOrden[$ordenMasReciente->id][$rubroId] = round(($detallesPorOrden[$ordenMasReciente->id][$rubroId] ?? 0) + $restante, 2);
             }
         }
 
@@ -417,11 +421,17 @@ class ItemsContractsController extends Controller
         $period = $request->input('month_date');
         $contratistaRepresentative = $request->input('contratista_representative');
 
-        $certifications = DB::transaction(function () use ($detallesPorOrden, $number, $period, $signDate, $creatorUserId, $contratistaRepresentative) {
+        // Identifica esta "tanda" de Actas, generadas juntas a partir de una misma medición combinada.
+        // Con ella el PDF de cada Acta puede reconocer que corresponde a más de una Orden de Ejecución
+        // y mostrar los valores Anterior/Actual/Acumulado agregados de todo el grupo.
+        $batchUuid = (string) Str::uuid();
+
+        $certifications = DB::transaction(function () use ($detallesPorOrden, $batchUuid, $number, $period, $signDate, $creatorUserId, $contratistaRepresentative) {
             $created = [];
             foreach ($detallesPorOrden as $orderId => $rubros) {
                 $certification = ItemCertification::create([
                     'order_id' => $orderId,
+                    'batch_uuid' => $batchUuid,
                     'number' => $number,
                     'period' => $period,
                     'sign_date' => $signDate,
@@ -545,12 +555,13 @@ class ItemsContractsController extends Controller
             'contratista_representative' => 'required|string|max:150',
             'items' => 'required|array|min:1',
             'items.*.rubro_id' => 'required|integer',
-            'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
         ];
         $messages = [
             'number.unique' => 'Ya existe otra Acta de Medición con ese N° de Planilla para esta orden.',
             'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
             'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
         ];
         $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
@@ -635,29 +646,71 @@ class ItemsContractsController extends Controller
         $order = $certification->order;
         $contract = $order->contract;
 
-        // Cantidad Anterior por rubro: suma de todas las actas previas a esta (mismo N° menor) de la misma orden
-        $anteriores = ItemCertificationDetail::whereHas('itemCertification', function ($q) use ($order, $certification) {
-                $q->where('order_id', $order->id)->where('number', '<', $certification->number);
-            })
-            ->selectRaw('rubro_id, SUM(quantity) as total')
-            ->groupBy('rubro_id')
-            ->pluck('total', 'rubro_id');
+        // Si esta Acta fue generada junto con otras (misma "tanda", identificada por batch_uuid) por hacer
+        // referencia a más de una Orden de Ejecución de la misma Localidad/Sub-Componente, agrupamos los
+        // valores Anterior/Actual/Acumulado de TODAS las órdenes de esa tanda, no sólo los de esta orden.
+        $ordenesReferenciadas = collect([$order]);
+        $ordenIdsGrupo = collect([$order->id]);
 
-        // Cantidad Actual (esta acta) por rubro
-        $actuales = $certification->details->pluck('quantity', 'rubro_id');
+        if ($certification->batch_uuid) {
+            $certificacionesTanda = ItemCertification::with('order', 'details')
+                ->where('batch_uuid', $certification->batch_uuid)
+                ->get();
 
-        // Rubros del componente/contrato, para listar la descripción y unidad
+            $ordenesReferenciadas = $certificacionesTanda->pluck('order')->unique('id')->sortBy('id')->values();
+            $ordenIdsGrupo = $ordenesReferenciadas->pluck('id');
+        }
+
+        $esMultiOrden = $ordenIdsGrupo->count() > 1;
+
+        if ($esMultiOrden) {
+            // Cantidad Actual por rubro: lo ingresado en esta Acta, sumando el detalle repartido entre todas las órdenes de la tanda
+            $actuales = $certificacionesTanda->flatMap->details
+                ->groupBy('rubro_id')
+                ->map(fn ($detalles) => $detalles->sum('quantity'));
+
+            // Cantidad Anterior por rubro: todo lo certificado antes de esta tanda, en cualquiera de las órdenes del grupo
+            $anteriores = ItemCertificationDetail::whereHas('itemCertification', function ($q) use ($ordenIdsGrupo, $certification) {
+                    $q->whereIn('order_id', $ordenIdsGrupo)
+                        ->where(function ($qq) use ($certification) {
+                            $qq->whereNull('batch_uuid')->orWhere('batch_uuid', '!=', $certification->batch_uuid);
+                        })
+                        ->where('created_at', '<=', $certification->created_at);
+                })
+                ->selectRaw('rubro_id, SUM(quantity) as total')
+                ->groupBy('rubro_id')
+                ->pluck('total', 'rubro_id');
+
+            // Cantidad solicitada por rubro agregada de TODAS las órdenes de la tanda
+            $cantidadesOrden = ItemOrder::whereIn('order_id', $ordenIdsGrupo)
+                ->selectRaw('rubro_id, SUM(quantity) as total')
+                ->groupBy('rubro_id')
+                ->pluck('total', 'rubro_id');
+        } else {
+            // Cantidad Anterior por rubro: suma de todas las actas previas a esta (mismo N° menor) de la misma orden
+            $anteriores = ItemCertificationDetail::whereHas('itemCertification', function ($q) use ($order, $certification) {
+                    $q->where('order_id', $order->id)->where('number', '<', $certification->number);
+                })
+                ->selectRaw('rubro_id, SUM(quantity) as total')
+                ->groupBy('rubro_id')
+                ->pluck('total', 'rubro_id');
+
+            // Cantidad Actual (esta acta) por rubro
+            $actuales = $certification->details->pluck('quantity', 'rubro_id');
+
+            // Cantidad solicitada por rubro EN ESTA ORDEN DE EJECUCIÓN (no la cantidad total del contrato); 0 si el rubro no fue solicitado en la orden
+            $cantidadesOrden = ItemOrder::where('order_id', $order->id)
+                ->pluck('quantity', 'rubro_id');
+        }
+
+        // Rubros del componente/contrato, para listar la descripción y unidad (siempre todos, independientemente de la cantidad de órdenes)
         $rubros = ItemContract::where('contract_id', $contract->id)
             ->where('component_id', $order->component_id)
             ->orderBy('id')
             ->get();
 
-        // Cantidad solicitada por rubro EN ESTA ORDEN DE EJECUCIÓN (no la cantidad total del contrato); 0 si el rubro no fue solicitado en la orden
-        $cantidadesOrden = ItemOrder::where('order_id', $order->id)
-            ->pluck('quantity', 'rubro_id');
-
         $pdf = App::make('dompdf.wrapper');
-        $view = View::make('reports.item_certification', compact('certification', 'order', 'contract', 'anteriores', 'actuales', 'rubros', 'cantidadesOrden'))->render();
+        $view = View::make('reports.item_certification', compact('certification', 'order', 'contract', 'anteriores', 'actuales', 'rubros', 'cantidadesOrden', 'esMultiOrden', 'ordenesReferenciadas'))->render();
         $pdf->loadHTML($view);
         return $pdf->stream('Acta_Certificacion_N' . $certification->number . '.pdf');
     }

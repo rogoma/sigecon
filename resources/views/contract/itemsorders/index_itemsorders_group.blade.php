@@ -701,7 +701,7 @@
                                                                 data-anterior="{{ $anterior }}"
                                                                 data-quantity="{{ $cantidadEjecutar }}"
                                                                 value="0"
-                                                                min="0" required step="any"
+                                                                min="0" required step="0.01"
                                                                 @if ($sinOrden) disabled title="Este rubro no fue incluido en ninguna orden del grupo" @endif
                                                                 oninput="actualizaAcumulado(this);">
                                                         </td>
@@ -812,6 +812,8 @@
 
             let actual = parseFloat(input.value);
             if (isNaN(actual) || actual < 0) actual = 0;
+            // Admite valores enteros o con hasta 2 decimales
+            actual = Math.round(actual * 100) / 100;
             input.value = actual;
 
             const acumulado = anterior + actual;
@@ -945,7 +947,8 @@
 
                 const items = [];
                 $('.medido').each(function() {
-                    const quantity = parseFloat($(this).val()) || 0;
+                    // Admite valores enteros o con hasta 2 decimales
+                    const quantity = Math.round((parseFloat($(this).val()) || 0) * 100) / 100;
                     if (quantity > 0) {
                         items.push({
                             rubro_id: $(this).data('rubro-id'),
@@ -1052,7 +1055,7 @@
                                     <td class="text-right">${Number(rubro.cantidad_ejecutar).toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                     <td>
                                         <input type="number" class="form-control form-control-sm edit-medido"
-                                            data-rubro-id="${rubro.rubro_id}" value="${rubro.quantity}" min="0" step="any">
+                                            data-rubro-id="${rubro.rubro_id}" value="${rubro.quantity}" min="0" step="0.01">
                                     </td>
                                 </tr>
                             `);
@@ -1098,7 +1101,8 @@
 
                 const items = [];
                 $('.edit-medido').each(function() {
-                    const quantity = parseFloat($(this).val()) || 0;
+                    // Admite valores enteros o con hasta 2 decimales
+                    const quantity = Math.round((parseFloat($(this).val()) || 0) * 100) / 100;
                     if (quantity > 0) {
                         items.push({
                             rubro_id: $(this).data('rubro-id'),

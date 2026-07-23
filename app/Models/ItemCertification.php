@@ -16,6 +16,7 @@ class ItemCertification extends Model
 
     protected $fillable = [
         'order_id',
+        'batch_uuid',
         'number',
         'period',
         'sign_date',
