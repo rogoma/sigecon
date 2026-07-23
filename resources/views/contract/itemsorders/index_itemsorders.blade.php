@@ -543,64 +543,6 @@
                             </div>
                         </div>
 
-                        {{-- ACTAS GENERADAS --}}
-                        <div class="card acta-card">
-                            <div class="acta-card-header">
-                                <h5><i class="fa-solid fa-clock-rotate-left"></i> Actas de Medición Generadas</h5>
-                                <span class="badge badge-pill" style="background:#eef5f9;color:var(--acta-primary-dark);">{{ $certifications->count() }} registradas</span>
-                            </div>
-                            <div class="acta-card-body p-0">
-                                @if ($certifications->isNotEmpty())
-                                    <div class="table-responsive">
-                                        <table class="table acta-generated-table mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>N° Planilla</th>
-                                                    <th>Período</th>
-                                                    <th>Fecha Medición</th>
-                                                    <th>Estado</th>
-                                                    <th class="text-right">Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($certifications as $certification)
-                                                    <tr>
-                                                        <td><strong>{{ $certification->number }}</strong></td>
-                                                        <td>{{ $certification->period }}</td>
-                                                        <td>{{ $certification->signDateFormat() }}</td>
-                                                        <td>
-                                                            @if ($certification->state_id == 1)
-                                                                <span class="badge badge-pill badge-info">Emitido</span>
-                                                            @else
-                                                                <span class="badge badge-pill badge-secondary">{{ $certification->state_id }}</span>
-                                                            @endif
-                                                        </td>
-                                                        <td class="text-right">
-                                                            @if ($certification->state_id == 1)
-                                                                <button type="button" class="btn btn-sm btn-outline-primary btn-edit-acta"
-                                                                    data-id="{{ $certification->id }}" title="Editar Acta">
-                                                                    <i class="fa-solid fa-pen"></i> Editar
-                                                                </button>
-                                                            @endif
-                                                            <a href="{{ route('item_certifications.pdf', $certification->id) }}"
-                                                                target="_blank" rel="noopener" class="acta-pdf-link">
-                                                                <i class="fa-solid fa-file-pdf"></i> Ver PDF
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                @else
-                                    <div class="acta-empty-state">
-                                        <i class="fa-regular fa-folder-open"></i>
-                                        Aún no se generaron actas de medición para esta orden.
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
                         {{-- DETALLE DE RUBROS --}}
                         <div class="card acta-card">
                             <div class="acta-card-header">
@@ -691,7 +633,7 @@
                                                                 value="0"
                                                                 min="0" required step="0.01"
                                                                 @if ($sinOrden) disabled title="Este rubro no fue incluido en esta orden" @endif
-                                                                oninput="actualizaAcumulado(this);">
+                                                                oninput="actualizaAcumulado(this);" onblur="sanitizaMedido(this);">
                                                         </td>
 
                                                         <td class="acumulado-mdo">{{ $tieneMdo ? number_format($anterior, 2, ',', '.') : '-' }}</td>
@@ -720,61 +662,6 @@
         </div>
     </div>
 
-    {{-- MODAL EDITAR ACTA DE MEDICIÓN --}}
-    <div class="modal fade" id="editActaModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fa-solid fa-pen"></i> Editar Acta de Medición <span id="editActaNumberTitle"></span></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="edit_certification_id">
-                    <div class="row">
-                        <div class="col-6 col-sm-4 col-lg-3 acta-field mb-3">
-                            <label for="edit_sign_date">Fecha de la Medición</label>
-                            <input type="text" id="edit_sign_date" placeholder="dd/mm/yyyy" class="form-control" autocomplete="off">
-                        </div>
-                        <div class="col-6 col-sm-4 col-lg-3 acta-field mb-3">
-                            <label for="edit_month_date">Mes/Año</label>
-                            <input type="text" id="edit_month_date" placeholder="mm/yyyy" class="form-control" autocomplete="off">
-                        </div>
-                        <div class="col-12 col-sm-4 col-lg-2 acta-field mb-3">
-                            <label for="edit_number">N° Planilla</label>
-                            <input type="number" id="edit_number" min="1" step="1" class="form-control">
-                        </div>
-                        <div class="col-12 col-lg-4 acta-field mb-3">
-                            <label for="edit_contratista_representative">Representante de la Contratista</label>
-                            <input type="text" id="edit_contratista_representative" placeholder="Nombre y apellido" class="form-control">
-                        </div>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0" id="editActaRubrosTable">
-                            <thead>
-                                <tr>
-                                    <th>Rubro</th>
-                                    <th>Unid.</th>
-                                    <th>Cant. Contract.</th>
-                                    <th>Cant. a Ejecutar</th>
-                                    <th>Cantidad Medida</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="saveEditActaButton">
-                        <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
@@ -792,6 +679,9 @@
 
         // Actualiza en vivo la barra de saldo, el Acumulado y el contador/estado del botón al tipear la medición.
         // No limita el valor máximo: se permite cargar más del saldo disponible, mostrando una advertencia visual.
+        // Importante: NO se sobreescribe input.value mientras el usuario escribe (eso impediría tipear el
+        // punto decimal, ya que un <input type="number"> devuelve "" mientras el valor está incompleto, ej. "12.").
+        // El redondeo a 2 decimales se aplica recién al perder el foco, ver sanitizaMedido().
         function actualizaAcumulado(input) {
             const $input = $(input);
             const row = $input.closest('tr');
@@ -800,9 +690,6 @@
 
             let actual = parseFloat(input.value);
             if (isNaN(actual) || actual < 0) actual = 0;
-            // Admite valores enteros o con hasta 2 decimales
-            actual = Math.round(actual * 100) / 100;
-            input.value = actual;
 
             const acumulado = anterior + actual;
             const excede = quantity > 0 && acumulado > quantity;
@@ -842,6 +729,15 @@
             }
 
             actualizaContador();
+        }
+
+        // Redondea a 2 decimales y descarta negativos/inválidos al perder el foco del campo Actual.
+        function sanitizaMedido(input) {
+            let actual = parseFloat(input.value);
+            if (isNaN(actual) || actual < 0) actual = 0;
+            actual = Math.round(actual * 100) / 100;
+            input.value = actual;
+            actualizaAcumulado(input);
         }
 
         // Actualiza el contador de rubros con medición > 0 y habilita/deshabilita el botón de grabar
@@ -994,145 +890,6 @@
                 );
             });
 
-            // Datepickers del modal de edición
-            $('#edit_month_date').datepicker({
-                language: 'es',
-                format: 'mm/yyyy',
-                autoclose: true,
-                todayHighlight: true,
-                minViewMode: 'months',
-            });
-
-            $('#edit_sign_date').datepicker({
-                language: 'es',
-                format: 'dd/mm/yyyy',
-                autoclose: true,
-                todayHighlight: true,
-            });
-
-            // Abre el modal de edición y precarga los datos del acta seleccionada
-            $(document).on('click', '.btn-edit-acta', function() {
-                const certificationId = $(this).data('id');
-
-                $.ajax({
-                    url: '/item_certifications/' + certificationId + '/edit',
-                    type: 'GET',
-                    success: function(response) {
-                        if (response.status !== 'success') {
-                            swal("Error!", response.message, "error");
-                            return;
-                        }
-
-                        const cert = response.certification;
-                        $('#edit_certification_id').val(cert.id);
-                        $('#editActaNumberTitle').text('N° ' + cert.number);
-                        $('#edit_number').val(cert.number);
-                        $('#edit_sign_date').val(cert.sign_date);
-                        $('#edit_month_date').val(cert.period);
-                        $('#edit_contratista_representative').val(cert.contratista_representative);
-
-                        const $tbody = $('#editActaRubrosTable tbody').empty();
-                        response.rubros.forEach(function(rubro) {
-                            $tbody.append(`
-                                <tr>
-                                    <td>${rubro.descripcion}</td>
-                                    <td>${rubro.unidad}</td>
-                                    <td class="text-right">${Number(rubro.cantidad_contrato).toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                                    <td class="text-right">${Number(rubro.cantidad_ejecutar).toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                                    <td>
-                                        <input type="number" class="form-control form-control-sm edit-medido"
-                                            data-rubro-id="${rubro.rubro_id}" value="${rubro.quantity}" min="0" step="0.01">
-                                    </td>
-                                </tr>
-                            `);
-                        });
-
-                        $('#editActaModal').modal('show');
-                    },
-                    error: function(xhr) {
-                        swal("Error!", "Ocurrió un error al cargar los datos del acta.", "error");
-                        console.error(xhr.responseText);
-                    },
-                });
-            });
-
-            // Guarda los cambios del acta editada con AJAX
-            $('#saveEditActaButton').click(function() {
-                const $btn = $(this);
-                const certificationId = $('#edit_certification_id').val();
-                const number = $('#edit_number').val();
-                const monthDate = $('#edit_month_date').val();
-                const signDate = $('#edit_sign_date').val();
-                const contratistaRepresentative = $('#edit_contratista_representative').val().trim();
-
-                if (!number || parseInt(number, 10) < 1) {
-                    swal("Atención", "Debe ingresar el N° de Planilla de Certificación.", "warning");
-                    return;
-                }
-
-                if (!monthDate || !signDate) {
-                    swal("Atención", "Debe completar el Mes/Año y la Fecha de la Medición.", "warning");
-                    return;
-                }
-
-                if (periodoExcedeFechaMedicion(monthDate, signDate)) {
-                    swal("Atención", "El Mes/Año del periodo no puede ser posterior al mes de la Fecha de la Medición.", "warning");
-                    return;
-                }
-
-                if (!contratistaRepresentative) {
-                    swal("Atención", "Debe ingresar el nombre del Representante de la Contratista.", "warning");
-                    return;
-                }
-
-                const items = [];
-                $('.edit-medido').each(function() {
-                    // Admite valores enteros o con hasta 2 decimales
-                    const quantity = Math.round((parseFloat($(this).val()) || 0) * 100) / 100;
-                    if (quantity > 0) {
-                        items.push({
-                            rubro_id: $(this).data('rubro-id'),
-                            quantity: quantity,
-                        });
-                    }
-                });
-
-                if (items.length === 0) {
-                    swal("Atención", "Debe ingresar al menos una cantidad medida mayor a 0.", "warning");
-                    return;
-                }
-
-                $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin mr-1"></i> Guardando...');
-
-                $.ajax({
-                    url: '/item_certifications/' + certificationId,
-                    type: 'POST',
-                    data: {
-                        _method: 'PUT',
-                        items: items,
-                        number: number,
-                        month_date: monthDate,
-                        sign_date: signDate,
-                        contratista_representative: contratistaRepresentative,
-                        _token: $('meta[name="csrf-token"]').attr('content'),
-                    },
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            window.open(response.redirect_url, '_blank');
-                            $('#editActaModal').modal('hide');
-                            window.location.reload();
-                        } else {
-                            swal("Error!", response.message, "error");
-                            $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios');
-                        }
-                    },
-                    error: function(xhr) {
-                        swal("Error!", "Ocurrió un error intentando actualizar la medición, por favor verifique los datos e intente nuevamente.", "error");
-                        console.error(xhr.responseText);
-                        $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios');
-                    },
-                });
-            });
         });
     </script>
 @endpush

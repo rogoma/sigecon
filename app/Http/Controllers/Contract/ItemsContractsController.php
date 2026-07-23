@@ -133,12 +133,7 @@ class ItemsContractsController extends Controller
         // Próximo N° de Planilla de Certificación para esta orden (se sugiere como valor por defecto; el usuario puede editarlo)
         $nextCertificationNumber = (int) ItemCertification::where('order_id', $order_id)->max('number') + 1;
 
-        // Actas de Medición ya generadas para esta orden, para listar los enlaces a sus PDFs
-        $certifications = ItemCertification::where('order_id', $order_id)
-            ->orderBy('number', 'asc')
-            ->get();
-
-        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'cantidadesContrato', 'cantidadesOrden', 'nextCertificationNumber', 'certifications'));
+        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'cantidadesContrato', 'cantidadesOrden', 'nextCertificationNumber'));
     }
 
     /**
@@ -197,18 +192,12 @@ class ItemsContractsController extends Controller
         // Próximo N° de Planilla sugerido: siguiente al mayor usado en cualquiera de las órdenes del grupo
         $nextCertificationNumber = (int) ItemCertification::whereIn('order_id', $orderIds)->max('number') + 1;
 
-        // Actas de Medición ya generadas para cualquiera de las órdenes de este grupo
-        $certifications = ItemCertification::whereIn('order_id', $orderIds)
-            ->with('order')
-            ->orderBy('number', 'asc')
-            ->get();
-
         $locality = $orders->first()->locality;
         $component = $orders->first()->component;
 
         return view('contract.itemsorders.index_itemsorders_group', compact(
             'items0', 'cantidadesGrupo', 'contract', 'orders', 'locality', 'component',
-            'anteriores', 'cantidadesContrato', 'nextCertificationNumber', 'certifications'
+            'anteriores', 'cantidadesContrato', 'nextCertificationNumber'
         ));
     }
 
@@ -454,12 +443,13 @@ class ItemsContractsController extends Controller
             return $created;
         });
 
+        // Aunque la medición se reparte en una Acta por cada Orden de Ejecución afectada (para llevar el saldo
+        // correctamente), se devuelve un único PDF: certificationPdf() reconoce el batch_uuid compartido y
+        // muestra los valores agregados de todas las órdenes de la tanda, por lo que basta con mostrar una.
         return response()->json([
             'status' => 'success',
-            'message' => 'Acta de Medición N° ' . $number . ' generada correctamente en ' . count($certifications) . ' orden' . (count($certifications) === 1 ? '' : 'es') . '.',
-            'redirect_urls' => collect($certifications)->map(function ($certification) {
-                return route('item_certifications.pdf', $certification->id);
-            })->values(),
+            'message' => 'Acta de Medición N° ' . $number . ' generada correctamente.',
+            'redirect_url' => route('item_certifications.pdf', collect($certifications)->first()->id),
         ]);
     }
 

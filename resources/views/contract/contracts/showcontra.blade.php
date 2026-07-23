@@ -645,11 +645,17 @@
 
                                                                     @php
                                                                         // Actas de Medición de todas las órdenes de este grupo (Localidad + Sub-Componente),
-                                                                        // ordenadas por N° de Planilla, conservando la orden dueña de cada acta.
+                                                                        // ordenadas por N° de Planilla. Las Actas generadas junto con otras (mismo batch_uuid,
+                                                                        // por abarcar más de una Orden de Ejecución) se muestran en una única fila que agrupa
+                                                                        // todas las órdenes referenciadas.
                                                                         $actasGrupo = collect();
                                                                         foreach ($ordersGroup as $ordenActa) {
                                                                             foreach ($ordenActa->certifications as $certificacion) {
-                                                                                $actasGrupo->push(['order' => $ordenActa, 'certification' => $certificacion]);
+                                                                                $claveTanda = $certificacion->batch_uuid ?? ('single-' . $certificacion->id);
+                                                                                if (!$actasGrupo->has($claveTanda)) {
+                                                                                    $actasGrupo->put($claveTanda, ['certification' => $certificacion, 'orders' => collect()]);
+                                                                                }
+                                                                                $actasGrupo[$claveTanda]['orders']->push($ordenActa);
                                                                             }
                                                                         }
                                                                         $actasGrupo = $actasGrupo->sortBy(fn ($fila) => $fila['certification']->number)->values();
@@ -679,7 +685,7 @@
                                                                                         @foreach ($actasGrupo as $fila)
                                                                                             <tr>
                                                                                                 <td><strong>{{ $fila['certification']->number }}</strong></td>
-                                                                                                <td>{{ $fila['order']->component_code }}-{{ $fila['order']->number }}</td>
+                                                                                                <td>{{ $fila['orders']->map(fn ($o) => $o->component_code . '-' . $o->number)->implode(', ') }}</td>
                                                                                                 <td>{{ $fila['certification']->period }}</td>
                                                                                                 <td>{{ $fila['certification']->signDateFormat() }}</td>
                                                                                                 <td class="text-right">
