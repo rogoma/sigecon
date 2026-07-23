@@ -693,6 +693,18 @@
                                                                                                         target="_blank" rel="noopener" class="acta-pdf-link">
                                                                                                         <i class="fa-solid fa-file-pdf"></i> Ver PDF
                                                                                                     </a>
+                                                                                                    @if ($fila['certification']->state_id == \App\Models\ItemCertification::STATE_EMITIDO)
+                                                                                                        <a href="{{ route('items_contracts.certi_group', [$contract->id, $ordersGroup->first()->locality_id, $ordersGroup->first()->component_id]) }}?acta={{ $fila['certification']->id }}"
+                                                                                                            class="btn btn-primary btn-icon" title="Editar Acta">
+                                                                                                            <i class="fa-solid fa-pen"></i>
+                                                                                                        </a>
+                                                                                                        <button type="button" class="btn btn-success btn-icon"
+                                                                                                            title="Aprobar Acta" onclick="aprobarActa({{ $fila['certification']->id }})">
+                                                                                                            <i class="fa-solid fa-check"></i>
+                                                                                                        </button>
+                                                                                                    @else
+                                                                                                        <span class="badge badge-pill badge-success">Aprobada</span>
+                                                                                                    @endif
                                                                                                 </td>
                                                                                             </tr>
                                                                                         @endforeach
@@ -1041,9 +1053,57 @@
             }
 
             //lleva a index de eventos de Ordenes
-            itemEvents = function(order) {                                
+            itemEvents = function(order) {
                 location.href = '/orders/' + order + '/events';
                 // lleva a esta ruta Route::resource('orders.events', EventsOrdersController::class);
+            }
+
+            // Aprueba una Acta de Medición (y toda su tanda, si abarca más de una Orden de Ejecución).
+            // Una vez aprobada queda bloqueada: ya no se puede editar ni volver a grabar.
+            aprobarActa = function(certificationId) {
+                swal({
+                        title: "Atención",
+                        text: "¿Está seguro que desea aprobar esta Acta de Medición? Una vez aprobada ya no podrá editarla.",
+                        type: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#DD6B55",
+                        confirmButtonText: "Sí, aprobar",
+                        cancelButtonText: "Cancelar",
+                    },
+                    function(isConfirm) {
+                        if (!isConfirm) return;
+
+                        $.ajax({
+                            url: '/item_certifications/' + certificationId + '/approve',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(data) {
+                                try {
+                                    response = (typeof data == "object") ? data : JSON.parse(data);
+                                    if (response.status == "success") {
+                                        swal("Éxito!", response.message, "success");
+                                        location.reload();
+                                    } else {
+                                        swal("Error!", response.message, "error");
+                                    }
+                                } catch (error) {
+                                    swal("Error!",
+                                        "Ocurrió un error intentado resolver la solicitud, por favor recargue la página e intente nuevamente.",
+                                        "error");
+                                    console.log(error);
+                                }
+                            },
+                            error: function(error) {
+                                swal("Error!",
+                                    "Ocurrió un error intentado resolver la solicitud, por favor recargue la página e intente nuevamente.",
+                                    "error");
+                                console.log(error);
+                            }
+                        });
+                    }
+                );
             }
 
             //lleva a index de archivos

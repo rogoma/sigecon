@@ -507,6 +507,7 @@
                                         @error('month_date')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
+                                        <div class="invalid-feedback d-block" id="month_date_feedback" style="display:none;"></div>
                                     </div>
 
                                     <div class="col-12 col-sm-4 col-lg-3 acta-field">
@@ -522,6 +523,7 @@
                                         @error('number')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
+                                        <div class="invalid-feedback d-block" id="number_feedback" style="display:none;"></div>
                                     </div>
 
                                     <div class="col-12 col-lg-5 acta-field mt-3 mt-lg-0">
@@ -538,6 +540,7 @@
                                         @error('contratista_representative')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
+                                        <div class="invalid-feedback d-block" id="representative_feedback" style="display:none;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -666,6 +669,54 @@
 
 @push('scripts')
     <script>
+        // N° de Planilla ya usados en esta orden, para poder avisar en vivo si el usuario repite un número,
+        // además de la validación del backend.
+        const numerosUsados = @json($numerosUsados->map(fn ($n) => (int) $n));
+
+        function mostrarErrorCampo($input, $feedback, mensaje) {
+            $input.addClass('is-invalid');
+            $feedback.text(mensaje).show();
+        }
+
+        function limpiarErrorCampo($input, $feedback) {
+            $input.removeClass('is-invalid');
+            $feedback.hide();
+        }
+
+        // Valida en vivo (al perder el foco) que el Mes/Año no sea posterior a la Fecha de la Medición
+        function validarPeriodo() {
+            const monthDate = $('#month_date').val();
+            const signDate = $('#sign_date').val();
+            if (monthDate && signDate && periodoExcedeFechaMedicion(monthDate, signDate)) {
+                mostrarErrorCampo($('#month_date'), $('#month_date_feedback'), 'El Mes/Año no puede ser posterior al mes de la Fecha de la Medición.');
+                return false;
+            }
+            limpiarErrorCampo($('#month_date'), $('#month_date_feedback'));
+            return true;
+        }
+
+        // Valida en vivo (al perder el foco) que el N° de Planilla no esté ya usado en esta orden
+        function validarNumeroPlanilla() {
+            const number = parseInt($('#number').val(), 10);
+            if (number && numerosUsados.includes(number)) {
+                mostrarErrorCampo($('#number'), $('#number_feedback'), 'Ya existe una Acta de Medición con ese N° de Planilla para esta orden.');
+                return false;
+            }
+            limpiarErrorCampo($('#number'), $('#number_feedback'));
+            return true;
+        }
+
+        // Valida en vivo (al perder el foco) que el Representante de la Contratista no quede vacío
+        function validarRepresentante() {
+            const representante = $('#contratista_representative').val().trim();
+            if (!representante) {
+                mostrarErrorCampo($('#contratista_representative'), $('#representative_feedback'), 'Debe ingresar el nombre del Representante de la Contratista.');
+                return false;
+            }
+            limpiarErrorCampo($('#contratista_representative'), $('#representative_feedback'));
+            return true;
+        }
+
         // El periodo (Mes/Año, mm/yyyy) puede ser igual o anterior al mes de la Fecha de la Medición (dd/mm/yyyy), pero nunca posterior.
         function periodoExcedeFechaMedicion(monthDate, signDate) {
             const m = /^(\d{2})\/(\d{4})$/.exec(monthDate || '');
@@ -800,6 +851,11 @@
 
             actualizaContador();
 
+            // Validación en vivo: avisa apenas el usuario completa/abandona cada campo, sin esperar a "Grabar"
+            $('#month_date, #sign_date').on('blur change', validarPeriodo);
+            $('#number').on('blur input', validarNumeroPlanilla);
+            $('#contratista_representative').on('blur', validarRepresentante);
+
             // Guardar Acta de Medición con AJAX
             $('#saveButton').click(function() {
                 const $btn = $(this);
@@ -826,6 +882,11 @@
 
                 if (!contratistaRepresentative) {
                     swal("Atención", "Debe ingresar el nombre del Representante de la Contratista.", "warning");
+                    return;
+                }
+
+                if (numerosUsados.includes(parseInt(number, 10))) {
+                    swal("Atención", "Ya existe una Acta de Medición con ese N° de Planilla para esta orden.", "warning");
                     return;
                 }
 

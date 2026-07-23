@@ -461,6 +461,10 @@
 
         <input type="hidden" id="store_url" value="{{ route('item_certifications.store_group', [$contract->id, $locality->id, $component->id]) }}">
         <input type="hidden" id="creator_user_id" value="{{ Auth::user()->id }}">
+        @if ($edicion)
+            <input type="hidden" id="editando_acta_id" value="{{ $edicion['certification_id'] }}">
+            <input type="hidden" id="update_url" value="{{ route('item_certifications.update_group', $edicion['certification_id']) }}">
+        @endif
 
         <div class="pcoded-inner-content">
             <div class="main-body">
@@ -478,16 +482,26 @@
                             @endforeach
                         </div>
 
-                        {{-- FORMULARIO NUEVA ACTA --}}
+                        {{-- FORMULARIO NUEVA ACTA / EDICIÓN DE ACTA EXISTENTE --}}
                         <div class="card acta-card">
                             <div class="acta-card-header">
-                                <h5><i class="fa-solid fa-square-plus"></i> Nueva Acta de Medición</h5>
+                                <h5>
+                                    <i class="fa-solid {{ $edicion ? 'fa-pen' : 'fa-square-plus' }}"></i>
+                                    {{ $edicion ? 'Editando Acta de Medición N° ' . $edicion['number'] : 'Nueva Acta de Medición' }}
+                                </h5>
                             </div>
                             <div class="acta-card-body">
-                                <div class="alert alert-info mb-3" style="border-radius:10px;">
-                                    <i class="fa-solid fa-circle-info mr-1"></i>
-                                    Esta medición combina todas las Órdenes "En Curso" de esta Localidad y Sub-Componente. Al grabar, la cantidad de cada rubro se reparte automáticamente contra el saldo de cada orden (empezando por la más antigua), generando una Acta por cada orden afectada con el mismo N° de Planilla.
-                                </div>
+                                @if ($edicion)
+                                    <div class="alert alert-warning mb-3" style="border-radius:10px;">
+                                        <i class="fa-solid fa-pen mr-1"></i>
+                                        Está editando la Acta de Medición N° {{ $edicion['number'] }}. Los valores ya cargados se muestran en la columna Actual; puede modificarlos y volver a grabar para reemplazar la Acta.
+                                    </div>
+                                @else
+                                    <div class="alert alert-info mb-3" style="border-radius:10px;">
+                                        <i class="fa-solid fa-circle-info mr-1"></i>
+                                        Esta medición combina todas las Órdenes "En Curso" de esta Localidad y Sub-Componente. Al grabar, la cantidad de cada rubro se reparte automáticamente contra el saldo de cada orden (empezando por la más antigua), generando una Acta por cada orden afectada con el mismo N° de Planilla.
+                                    </div>
+                                @endif
                                 <div class="row">
                                     <div class="col-6 col-sm-4 col-lg-2 acta-field mb-3 mb-lg-0">
                                         <label for="sign_date">Fecha de la Medición</label>
@@ -497,7 +511,7 @@
                                             </div>
                                             <input type="text" id="sign_date" name="sign_date" placeholder="dd/mm/yyyy"
                                                 class="form-control @error('sign_date') is-invalid @enderror"
-                                                value="{{ old('sign_date') }}" autocomplete="off">
+                                                value="{{ old('sign_date', $edicion['sign_date'] ?? '') }}" autocomplete="off">
                                         </div>
                                         @error('sign_date')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -512,11 +526,12 @@
                                             </div>
                                             <input type="text" id="month_date" name="month_date" placeholder="mm/yyyy"
                                                 class="form-control @error('month_date') is-invalid @enderror"
-                                                value="{{ old('month_date') }}" autocomplete="off">
+                                                value="{{ old('month_date', $edicion['period'] ?? '') }}" autocomplete="off">
                                         </div>
                                         @error('month_date')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
+                                        <div class="invalid-feedback d-block" id="month_date_feedback" style="display:none;"></div>
                                     </div>
 
                                     <div class="col-12 col-sm-4 col-lg-3 acta-field">
@@ -527,11 +542,12 @@
                                             </div>
                                             <input type="number" id="number" name="number" min="1" step="1"
                                                 class="form-control @error('number') is-invalid @enderror"
-                                                value="{{ old('number', $nextCertificationNumber) }}">
+                                                value="{{ old('number', $edicion['number'] ?? $nextCertificationNumber) }}">
                                         </div>
                                         @error('number')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
+                                        <div class="invalid-feedback d-block" id="number_feedback" style="display:none;"></div>
                                     </div>
 
                                     <div class="col-12 col-lg-5 acta-field mt-3 mt-lg-0">
@@ -543,8 +559,9 @@
                                             <input type="text" id="contratista_representative" name="contratista_representative"
                                                 placeholder="Nombre y apellido"
                                                 class="form-control @error('contratista_representative') is-invalid @enderror"
-                                                value="{{ old('contratista_representative') }}">
+                                                value="{{ old('contratista_representative', $edicion['contratista_representative'] ?? '') }}">
                                         </div>
+                                        <div class="invalid-feedback d-block" id="representative_feedback" style="display:none;"></div>
                                         @error('contratista_representative')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
@@ -603,6 +620,8 @@
                                                         // De acuerdo al ítem: puede tener mano de obra (mdo), materiales (mat), o ambos
                                                         $tieneMdo = (float) ($item->unit_price_mo ?? 0) > 0;
                                                         $tieneMat = (float) ($item->unit_price_mat ?? 0) > 0;
+                                                        // En modo edición, precarga el valor Actual ya cargado en la Acta que se está editando
+                                                        $valorEdicion = $edicion['valores'][$item->rubro_id] ?? 0;
                                                     @endphp
                                                     <tr data-tiene-mdo="{{ $tieneMdo ? 1 : 0 }}" data-tiene-mat="{{ $tieneMat ? 1 : 0 }}">
                                                         <td class="item_number">{{ $item->item_number }}</td>
@@ -640,7 +659,7 @@
                                                                 data-rubro-id="{{ $item->rubro_id }}"
                                                                 data-anterior="{{ $anterior }}"
                                                                 data-quantity="{{ $cantidadEjecutar }}"
-                                                                value="0"
+                                                                value="{{ $valorEdicion }}"
                                                                 min="0" required step="0.01"
                                                                 @if ($sinOrden) disabled title="Este rubro no fue incluido en ninguna orden del grupo" @endif
                                                                 oninput="actualizaAcumulado(this);" onblur="sanitizaMedido(this);">
@@ -660,7 +679,7 @@
                                 <div class="acta-actionbar">
                                     <span class="badge badge-pill" id="itemsCounter"><i class="fa-solid fa-circle-check mr-1"></i> 0 rubros con medición</span>
                                     <button type="button" id="saveButton" class="btn btn-primary" disabled>
-                                        <i class="fa-solid fa-floppy-disk mr-1"></i> Grabar Medición
+                                        <i class="fa-solid fa-floppy-disk mr-1"></i> {{ $edicion ? 'Regrabar Medición' : 'Grabar Medición' }}
                                     </button>
                                 </div>
                             @endif
@@ -676,6 +695,10 @@
 
 @push('scripts')
     <script>
+        // N° de Planilla ya usados por otras Actas de este grupo (excluye la propia Acta en modo edición),
+        // para poder avisar en vivo si el usuario repite un número, además de la validación del backend.
+        const numerosUsados = @json($numerosUsados->map(fn ($n) => (int) $n));
+
         // El periodo (Mes/Año, mm/yyyy) puede ser igual o anterior al mes de la Fecha de la Medición (dd/mm/yyyy), pero nunca posterior.
         function periodoExcedeFechaMedicion(monthDate, signDate) {
             const m = /^(\d{2})\/(\d{4})$/.exec(monthDate || '');
@@ -685,6 +708,50 @@
             const periodoValor = parseInt(m[2], 10) * 12 + parseInt(m[1], 10);
             const signValor = parseInt(s[3], 10) * 12 + parseInt(s[2], 10);
             return periodoValor > signValor;
+        }
+
+        function mostrarErrorCampo($input, $feedback, mensaje) {
+            $input.addClass('is-invalid');
+            $feedback.text(mensaje).show();
+        }
+
+        function limpiarErrorCampo($input, $feedback) {
+            $input.removeClass('is-invalid');
+            $feedback.hide();
+        }
+
+        // Valida en vivo (al perder el foco) que el Mes/Año no sea posterior a la Fecha de la Medición
+        function validarPeriodo() {
+            const monthDate = $('#month_date').val();
+            const signDate = $('#sign_date').val();
+            if (monthDate && signDate && periodoExcedeFechaMedicion(monthDate, signDate)) {
+                mostrarErrorCampo($('#month_date'), $('#month_date_feedback'), 'El Mes/Año no puede ser posterior al mes de la Fecha de la Medición.');
+                return false;
+            }
+            limpiarErrorCampo($('#month_date'), $('#month_date_feedback'));
+            return true;
+        }
+
+        // Valida en vivo (al perder el foco) que el N° de Planilla no esté ya usado en este grupo
+        function validarNumeroPlanilla() {
+            const number = parseInt($('#number').val(), 10);
+            if (number && numerosUsados.includes(number)) {
+                mostrarErrorCampo($('#number'), $('#number_feedback'), 'Ya existe una Acta de Medición con ese N° de Planilla en este grupo.');
+                return false;
+            }
+            limpiarErrorCampo($('#number'), $('#number_feedback'));
+            return true;
+        }
+
+        // Valida en vivo (al perder el foco) que el Representante de la Contratista no quede vacío
+        function validarRepresentante() {
+            const representante = $('#contratista_representative').val().trim();
+            if (!representante) {
+                mostrarErrorCampo($('#contratista_representative'), $('#representative_feedback'), 'Debe ingresar el nombre del Representante de la Contratista.');
+                return false;
+            }
+            limpiarErrorCampo($('#contratista_representative'), $('#representative_feedback'));
+            return true;
         }
 
         // Actualiza en vivo la barra de saldo, el Acumulado y el contador/estado del botón al tipear la medición.
@@ -810,10 +877,26 @@
 
             actualizaContador();
 
-            // Guardar Acta de Medición (combinada) con AJAX
+            // Validación en vivo: avisa apenas el usuario completa/abandona cada campo, sin esperar a "Grabar"
+            $('#month_date, #sign_date').on('blur change', validarPeriodo);
+            $('#number').on('blur input', validarNumeroPlanilla);
+            $('#contratista_representative').on('blur', validarRepresentante);
+
+            // Modo edición: recalcula en vivo (barra de saldo, Acumulado, contador) con los valores precargados
+            const editandoActaId = $('#editando_acta_id').val();
+            if (editandoActaId) {
+                $('.medido').each(function() {
+                    if (parseFloat(this.value) > 0) {
+                        actualizaAcumulado(this);
+                    }
+                });
+            }
+
+            // Guardar (o Regrabar, en modo edición) Acta de Medición combinada con AJAX
             $('#saveButton').click(function() {
                 const $btn = $(this);
-                const storeUrl = $('#store_url').val();
+                const editandoActaId = $('#editando_acta_id').val();
+                const ajaxUrl = editandoActaId ? $('#update_url').val() : $('#store_url').val();
                 const monthDate = $('#month_date').val();
                 const signDate = $('#sign_date').val();
                 const number = $('#number').val();
@@ -839,6 +922,11 @@
                     return;
                 }
 
+                if (numerosUsados.includes(parseInt(number, 10))) {
+                    swal("Atención", "Ya existe una Acta de Medición con ese N° de Planilla en este grupo.", "warning");
+                    return;
+                }
+
                 const items = [];
                 $('.medido').each(function() {
                     // Admite valores enteros o con hasta 2 decimales
@@ -858,11 +946,13 @@
 
                 swal({
                         title: "Atención",
-                        text: "¿Está seguro que desea grabar esta Acta de Medición? La cantidad de cada rubro se repartirá entre las órdenes afectadas.",
+                        text: editandoActaId
+                            ? "¿Está seguro que desea regrabar esta Acta de Medición? Se reemplazarán los valores cargados anteriormente."
+                            : "¿Está seguro que desea grabar esta Acta de Medición? La cantidad de cada rubro se repartirá entre las órdenes afectadas.",
                         type: "warning",
                         showCancelButton: true,
                         confirmButtonColor: "#DD6B55",
-                        confirmButtonText: "Sí, grabar",
+                        confirmButtonText: editandoActaId ? "Sí, regrabar" : "Sí, grabar",
                         cancelButtonText: "Cancelar",
                     },
                     function(isConfirm) {
@@ -871,9 +961,10 @@
                         $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin mr-1"></i> Guardando...');
 
                         $.ajax({
-                            url: storeUrl,
+                            url: ajaxUrl,
                             type: 'POST',
                             data: {
+                                _method: editandoActaId ? 'PUT' : 'POST',
                                 items: items,
                                 number: number,
                                 month_date: monthDate,
@@ -882,6 +973,7 @@
                                 _token: $('meta[name="csrf-token"]').attr('content'),
                             },
                             success: function(response) {
+                                const textoBoton = editandoActaId ? 'Regrabar Medición' : 'Grabar Medición';
                                 if (response.status === 'success') {
                                     // Aunque la medición se reparte en varias Actas (una por Orden afectada),
                                     // se muestra un único PDF que engloba todas las órdenes de la tanda.
@@ -891,13 +983,14 @@
                                     window.location.href = "{{ route('contracts.volver', $contract->id) }}";
                                 } else {
                                     swal("Error!", response.message, "error");
-                                    $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Grabar Medición');
+                                    $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> ' + textoBoton);
                                 }
                             },
                             error: function(xhr) {
+                                const textoBoton = editandoActaId ? 'Regrabar Medición' : 'Grabar Medición';
                                 swal("Error!", "Ocurrió un error intentando grabar la medición, por favor verifique los datos e intente nuevamente.", "error");
                                 console.error(xhr.responseText);
-                                $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> Grabar Medición');
+                                $btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk mr-1"></i> ' + textoBoton);
                             },
                         });
                     }

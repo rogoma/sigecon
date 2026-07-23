@@ -11,8 +11,9 @@ class ItemCertification extends Model
 
     protected $table = 'item_certifications';
 
-    // Estados del acta de medición: 1 = Emitido (editable)
+    // Estados del acta de medición: 1 = Emitido (editable), 2 = Aprobado (bloqueado, ya no editable)
     const STATE_EMITIDO = 1;
+    const STATE_APROBADO = 2;
 
     protected $fillable = [
         'order_id',

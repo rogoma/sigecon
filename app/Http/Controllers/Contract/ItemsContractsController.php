@@ -133,7 +133,10 @@ class ItemsContractsController extends Controller
         // Próximo N° de Planilla de Certificación para esta orden (se sugiere como valor por defecto; el usuario puede editarlo)
         $nextCertificationNumber = (int) ItemCertification::where('order_id', $order_id)->max('number') + 1;
 
-        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'cantidadesContrato', 'cantidadesOrden', 'nextCertificationNumber'));
+        // N° de Planilla ya usados en esta orden, para poder avisar en vivo (JS) si el usuario repite uno
+        $numerosUsados = ItemCertification::where('order_id', $order_id)->pluck('number')->unique()->values();
+
+        return view('contract.itemsorders.index_itemsorders', compact('items0', 'items', 'contract', 'order', 'anteriores', 'cantidadesContrato', 'cantidadesOrden', 'nextCertificationNumber', 'numerosUsados'));
     }
 
     /**
@@ -178,26 +181,78 @@ class ItemsContractsController extends Controller
                 ->groupBy('rubro_id')
                 ->pluck('total', 'rubro_id');
 
-        // Cantidad ya certificada (Anterior) por rubro, sumando todas las actas previas de CUALQUIERA de las órdenes del grupo
-        $anteriores = ItemCertificationDetail::whereHas('itemCertification', function ($q) use ($orderIds) {
-                $q->whereIn('order_id', $orderIds);
-            })
-            ->selectRaw('rubro_id, SUM(quantity) as total')
-            ->groupBy('rubro_id')
-            ->pluck('total', 'rubro_id');
-
         // Cantidad Contratada por rubro (Cant. Contract.)
         $cantidadesContrato = $items0->pluck('quantity', 'rubro_id');
 
         // Próximo N° de Planilla sugerido: siguiente al mayor usado en cualquiera de las órdenes del grupo
         $nextCertificationNumber = (int) ItemCertification::whereIn('order_id', $orderIds)->max('number') + 1;
 
+        // N° de Planilla ya usados en el grupo, para poder avisar en vivo (JS) si el usuario repite uno
+        $numerosUsados = ItemCertification::whereIn('order_id', $orderIds)->pluck('number')->unique()->values();
+
+        // Modo edición: si se pasa ?acta=ID, se precargan los valores Actual de esa Acta (y de toda su
+        // "tanda" si abarca más de una orden) para permitir modificarlos y volver a grabar ("regrabar").
+        // Sólo se permite editar Actas en estado Emitido.
+        $edicion = null;
+        $tandaCertificationIdsEditar = collect();
+        $actaId = $request->query('acta');
+
+        if ($actaId) {
+            $certificacionEditar = ItemCertification::find($actaId);
+
+            if (!$certificacionEditar || !$orderIds->contains($certificacionEditar->order_id)) {
+                return back()->with('error', 'La Acta de Medición indicada no corresponde a esta Localidad y Sub-Componente.');
+            }
+
+            if ($certificacionEditar->state_id != ItemCertification::STATE_EMITIDO) {
+                return back()->with('error', 'Esta Acta de Medición ya fue aprobada y no puede editarse.');
+            }
+
+            $certificacionesTandaEditar = $certificacionEditar->batch_uuid
+                ? ItemCertification::with('details')->where('batch_uuid', $certificacionEditar->batch_uuid)->get()
+                : ItemCertification::with('details')->where('id', $certificacionEditar->id)->get();
+
+            $tandaCertificationIdsEditar = $certificacionesTandaEditar->pluck('id');
+
+            // Valores Actual de la Acta a editar, agregados por rubro (suma del reparto entre las órdenes de la tanda)
+            $valoresEdicion = $certificacionesTandaEditar->flatMap->details
+                ->groupBy('rubro_id')
+                ->map(fn ($detalles) => (float) $detalles->sum('quantity'));
+
+            $edicion = [
+                'certification_id' => $certificacionEditar->id,
+                'number' => $certificacionEditar->number,
+                'period' => $certificacionEditar->period,
+                'sign_date' => \Carbon\Carbon::parse($certificacionEditar->sign_date)->format('d/m/Y'),
+                'contratista_representative' => $certificacionEditar->contratista_representative,
+                'valores' => $valoresEdicion,
+            ];
+        }
+
+        // Cantidad ya certificada (Anterior) por rubro, sumando todas las actas previas de CUALQUIERA de las
+        // órdenes del grupo. En modo edición se excluye la propia tanda editada, para no duplicar sus valores
+        // (que ya se muestran precargados en la columna Actual).
+        $anteriores = ItemCertificationDetail::whereHas('itemCertification', function ($q) use ($orderIds, $tandaCertificationIdsEditar) {
+                $q->whereIn('order_id', $orderIds);
+                if ($tandaCertificationIdsEditar->isNotEmpty()) {
+                    $q->whereNotIn('id', $tandaCertificationIdsEditar);
+                }
+            })
+            ->selectRaw('rubro_id, SUM(quantity) as total')
+            ->groupBy('rubro_id')
+            ->pluck('total', 'rubro_id');
+
+        // Al editar, el propio N° de Planilla de la Acta no cuenta como "repetido"
+        if ($edicion) {
+            $numerosUsados = $numerosUsados->reject(fn ($n) => (int) $n === (int) $edicion['number'])->values();
+        }
+
         $locality = $orders->first()->locality;
         $component = $orders->first()->component;
 
         return view('contract.itemsorders.index_itemsorders_group', compact(
             'items0', 'cantidadesGrupo', 'contract', 'orders', 'locality', 'component',
-            'anteriores', 'cantidadesContrato', 'nextCertificationNumber'
+            'anteriores', 'cantidadesContrato', 'nextCertificationNumber', 'numerosUsados', 'edicion'
         ));
     }
 
@@ -356,54 +411,8 @@ class ItemsContractsController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Debe ingresar al menos una cantidad medida mayor a 0.', 'code' => 200], 200);
         }
 
-        // Cant. a Ejecutar por orden y rubro (lo asignado en items_orders de cada orden)
-        $cantidadesPorOrden = ItemOrder::whereIn('order_id', $orderIds)
-            ->get()
-            ->groupBy('order_id')
-            ->map(function ($rows) {
-                return $rows->pluck('quantity', 'rubro_id');
-            });
-
-        // Lo ya certificado por orden y rubro en actas previas
-        $certificadoPorOrden = ItemCertificationDetail::join('item_certifications', 'item_certifications.id', '=', 'item_certification_details.item_certification_id')
-            ->whereIn('item_certifications.order_id', $orderIds)
-            ->selectRaw('item_certifications.order_id as order_id, item_certification_details.rubro_id as rubro_id, SUM(item_certification_details.quantity) as total')
-            ->groupBy('item_certifications.order_id', 'item_certification_details.rubro_id')
-            ->get()
-            ->groupBy('order_id')
-            ->map(function ($rows) {
-                return $rows->pluck('total', 'rubro_id');
-            });
-
         // Repartimos cada rubro medido contra el saldo de cada orden, de la más antigua a la más reciente
-        $detallesPorOrden = []; // [order_id => [rubro_id => quantity]]
-        foreach ($itemsInput as $itemInput) {
-            $rubroId = $itemInput['rubro_id'];
-            $restante = (float) $itemInput['quantity'];
-
-            foreach ($orders as $order) {
-                if ($restante <= 0) {
-                    break;
-                }
-                $asignadoOrden = (float) ($cantidadesPorOrden[$order->id][$rubroId] ?? 0);
-                $certificadoOrden = (float) ($certificadoPorOrden[$order->id][$rubroId] ?? 0);
-                $saldoOrden = max(0, $asignadoOrden - $certificadoOrden);
-                if ($saldoOrden <= 0) {
-                    continue;
-                }
-                // Redondeamos a 2 decimales en cada paso para evitar arrastre de error de punto flotante
-                $aplicar = round(min($restante, $saldoOrden), 2);
-                $detallesPorOrden[$order->id][$rubroId] = round(($detallesPorOrden[$order->id][$rubroId] ?? 0) + $aplicar, 2);
-                $restante = round($restante - $aplicar, 2);
-            }
-
-            // Excedente sin saldo en ninguna orden del grupo: se registra contra la orden más reciente
-            // (permite exceder saldo, igual que la carga por orden individual)
-            if ($restante > 0) {
-                $ordenMasReciente = $orders->last();
-                $detallesPorOrden[$ordenMasReciente->id][$rubroId] = round(($detallesPorOrden[$ordenMasReciente->id][$rubroId] ?? 0) + $restante, 2);
-            }
-        }
+        $detallesPorOrden = $this->distribuirRepartoEntreOrdenes($orders, $orderIds, $itemsInput);
 
         $signDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->input('sign_date'))->format('Y-m-d');
         $creatorUserId = $request->user()->id;
@@ -450,6 +459,215 @@ class ItemsContractsController extends Controller
             'status' => 'success',
             'message' => 'Acta de Medición N° ' . $number . ' generada correctamente.',
             'redirect_url' => route('item_certifications.pdf', collect($certifications)->first()->id),
+        ]);
+    }
+
+    /**
+     * Regraba una Acta de Medición combinada existente, identificada por cualquiera de las certificaciones
+     * de su "tanda" (batch_uuid). Recalcula el reparto entre las órdenes vigentes del grupo, excluyendo el
+     * propio detalle previo de la tanda del cálculo de saldo (se está reemplazando, no sumando), y reemplaza
+     * las certificaciones/detalles de la tanda por el nuevo reparto. Sólo se permite mientras la Acta esté
+     * en estado Emitido.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updateCertiGroup(Request $request, $certification_id)
+    {
+        $certification = ItemCertification::findOrFail($certification_id);
+        $order = $certification->order;
+        $contract = $order->contract;
+
+        // Chequeamos permisos del usuario: acceso vía permiso, vía rol Contratista (role_id 4, no maneja permisos) o por dependencia dueña del contrato
+        if (!$request->user()->hasPermission(['admin.items.update', 'contracts.items.update'])
+            && $request->user()->role_id != 4
+            && $contract->dependency_id != $request->user()->dependency_id) {
+            return response()->json(['status' => 'error', 'message' => 'No posee los suficientes permisos para realizar esta acción.', 'code' => 200], 200);
+        }
+
+        if ($certification->state_id != ItemCertification::STATE_EMITIDO) {
+            return response()->json(['status' => 'error', 'message' => 'Esta Acta de Medición ya fue aprobada y no puede editarse.', 'code' => 200], 200);
+        }
+
+        // Certificaciones de la tanda original de esta Acta (una por Orden de Ejecución afectada)
+        $certificacionesTanda = $certification->batch_uuid
+            ? ItemCertification::where('batch_uuid', $certification->batch_uuid)->get()
+            : ItemCertification::where('id', $certification->id)->get();
+
+        $tandaCertificationIds = $certificacionesTanda->pluck('id')->all();
+
+        // Órdenes "En Curso" vigentes de la misma Localidad/Sub-Componente (puede haber cambiado desde que
+        // se generó la Acta si se agregaron o finalizaron órdenes)
+        $orders = Order::where('contract_id', $order->contract_id)
+            ->where('locality_id', $order->locality_id)
+            ->where('component_id', $order->component_id)
+            ->where('order_state_id', 1)
+            ->orderBy('id')
+            ->get();
+
+        // Si alguna de las órdenes originales de la Acta ya no está "En Curso", igual debe poder recibir su
+        // reparto (para no perder su Acta), así que la incluimos si falta.
+        $ordersById = $orders->keyBy('id');
+        foreach ($certificacionesTanda->pluck('order_id') as $tandaOrderId) {
+            if (!$ordersById->has($tandaOrderId)) {
+                $ordenOriginal = Order::find($tandaOrderId);
+                if ($ordenOriginal) {
+                    $orders->push($ordenOriginal);
+                    $ordersById->put($ordenOriginal->id, $ordenOriginal);
+                }
+            }
+        }
+        $orders = $orders->sortBy('id')->values();
+
+        if ($orders->isEmpty()) {
+            return response()->json(['status' => 'error', 'message' => 'No hay Órdenes de Ejecución disponibles para esta Localidad y Sub-Componente.', 'code' => 200], 200);
+        }
+
+        $orderIds = $orders->pluck('id');
+
+        $rules = [
+            'number' => 'required|integer|min:1',
+            'month_date' => ['required', 'string', 'regex:/^\d{2}\/\d{4}$/'],
+            'sign_date' => 'required|date_format:d/m/Y',
+            'contratista_representative' => 'required|string|max:150',
+            'items' => 'required|array|min:1',
+            'items.*.rubro_id' => 'required|integer',
+            'items.*.quantity' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
+        ];
+        $messages = [
+            'month_date.regex' => 'El Mes/Año debe tener el formato mm/yyyy.',
+            'contratista_representative.required' => 'Debe ingresar el nombre del representante de la Contratista.',
+            'items.*.quantity.regex' => 'La cantidad medida admite como máximo 2 decimales.',
+        ];
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 200], 200);
+        }
+
+        if ($this->periodoExcedeFechaMedicion($request->input('month_date'), $request->input('sign_date'))) {
+            return response()->json(['status' => 'error', 'message' => 'El Mes/Año del periodo no puede ser posterior al mes de la Fecha de la Medición.', 'code' => 200], 200);
+        }
+
+        $number = (int) $request->input('number');
+
+        // El N° de Planilla debe estar libre en todas las órdenes del grupo, salvo en las certificaciones de esta misma tanda
+        $numeroEnUso = ItemCertification::whereIn('order_id', $orderIds)
+            ->where('number', $number)
+            ->whereNotIn('id', $tandaCertificationIds)
+            ->exists();
+        if ($numeroEnUso) {
+            return response()->json(['status' => 'error', 'message' => 'Ya existe una Acta de Medición con ese N° de Planilla en alguna de las órdenes de este grupo.', 'code' => 200], 200);
+        }
+
+        // Solo persistimos rubros con cantidad medida mayor a 0
+        $itemsInput = collect($request->input('items'))->filter(function ($item) {
+            return (float) $item['quantity'] > 0;
+        });
+
+        if ($itemsInput->isEmpty()) {
+            return response()->json(['status' => 'error', 'message' => 'Debe ingresar al menos una cantidad medida mayor a 0.', 'code' => 200], 200);
+        }
+
+        // Repartimos excluyendo el detalle previo de esta misma tanda del cálculo de saldo (se reemplaza, no se suma)
+        $detallesPorOrden = $this->distribuirRepartoEntreOrdenes($orders, $orderIds, $itemsInput, $tandaCertificationIds);
+
+        $signDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->input('sign_date'))->format('Y-m-d');
+        $period = $request->input('month_date');
+        $contratistaRepresentative = $request->input('contratista_representative');
+
+        // Si la Acta original no tenía batch_uuid (fue creada por orden individual) y ahora el reparto
+        // requiere más de una orden, se genera uno nuevo para que el PDF pueda agrupar la tanda completa.
+        $batchUuid = $certification->batch_uuid ?: (string) Str::uuid();
+
+        $certificacionesPorOrden = $certificacionesTanda->keyBy('order_id');
+
+        $resultado = DB::transaction(function () use ($detallesPorOrden, $certificacionesPorOrden, $batchUuid, $number, $period, $signDate, $contratistaRepresentative, $request) {
+            $vigentesIds = [];
+
+            foreach ($detallesPorOrden as $orderId => $rubros) {
+                $cert = $certificacionesPorOrden->get($orderId);
+
+                if ($cert) {
+                    $cert->update([
+                        'batch_uuid' => $batchUuid,
+                        'number' => $number,
+                        'period' => $period,
+                        'sign_date' => $signDate,
+                        'contratista_representative' => $contratistaRepresentative,
+                    ]);
+                    $cert->details()->delete();
+                } else {
+                    $cert = ItemCertification::create([
+                        'order_id' => $orderId,
+                        'batch_uuid' => $batchUuid,
+                        'number' => $number,
+                        'period' => $period,
+                        'sign_date' => $signDate,
+                        'creator_user_id' => $request->user()->id,
+                        'state_id' => ItemCertification::STATE_EMITIDO,
+                        'contratista_representative' => $contratistaRepresentative,
+                    ]);
+                }
+
+                foreach ($rubros as $rubroId => $quantity) {
+                    ItemCertificationDetail::create([
+                        'item_certification_id' => $cert->id,
+                        'rubro_id' => $rubroId,
+                        'quantity' => $quantity,
+                    ]);
+                }
+
+                $vigentesIds[] = $cert->id;
+            }
+
+            // Certificaciones de la tanda original que ya no reciben rubros en el nuevo reparto: se eliminan
+            foreach ($certificacionesPorOrden as $cert) {
+                if (!in_array($cert->id, $vigentesIds)) {
+                    $cert->delete();
+                }
+            }
+
+            return $vigentesIds;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Acta de Medición N° ' . $number . ' actualizada correctamente.',
+            'redirect_url' => route('item_certifications.pdf', $resultado[0]),
+        ]);
+    }
+
+    /**
+     * Aprueba una Acta de Medición (y toda su "tanda" si abarca más de una Orden de Ejecución), pasándola de
+     * estado Emitido a Aprobado. Una Acta aprobada queda bloqueada: ya no puede editarse ni volver a grabarse.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function approveCerti(Request $request, $certification_id)
+    {
+        $certification = ItemCertification::findOrFail($certification_id);
+        $order = $certification->order;
+
+        // Chequeamos permisos del usuario: acceso vía permiso, vía rol Contratista (role_id 4, no maneja permisos) o por dependencia dueña del contrato
+        if (!$request->user()->hasPermission(['admin.items.update', 'contracts.items.update'])
+            && $request->user()->role_id != 4
+            && $order->contract->dependency_id != $request->user()->dependency_id) {
+            return response()->json(['status' => 'error', 'message' => 'No posee los suficientes permisos para realizar esta acción.', 'code' => 200], 200);
+        }
+
+        if ($certification->state_id != ItemCertification::STATE_EMITIDO) {
+            return response()->json(['status' => 'error', 'message' => 'Esta Acta de Medición ya fue aprobada.', 'code' => 200], 200);
+        }
+
+        $certificacionesTanda = $certification->batch_uuid
+            ? ItemCertification::where('batch_uuid', $certification->batch_uuid)->get()
+            : ItemCertification::where('id', $certification->id)->get();
+
+        ItemCertification::whereIn('id', $certificacionesTanda->pluck('id'))
+            ->update(['state_id' => ItemCertification::STATE_APROBADO]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Acta de Medición N° ' . $certification->number . ' aprobada correctamente.',
         ]);
     }
 
@@ -592,6 +810,78 @@ class ItemsContractsController extends Controller
             'message' => 'Acta de Medición N° ' . $certification->number . ' actualizada correctamente.',
             'redirect_url' => route('item_certifications.pdf', $certification->id),
         ]);
+    }
+
+    /**
+     * Reparte cada rubro medido contra el saldo de cada orden del grupo, de la más antigua a la más reciente.
+     * Si sobra medición luego de agotar el saldo de todas las órdenes, el excedente se registra contra la
+     * orden más reciente (permite exceder saldo). Usado tanto al generar una Acta nueva como al regrabar una
+     * existente; en este último caso $excludeCertificationIds excluye el propio detalle previo de la Acta
+     * que se está editando del cálculo de "ya certificado", para no restarlo contra su propio saldo.
+     *
+     * @param \Illuminate\Support\Collection $orders Órdenes del grupo, ordenadas de más antigua a más reciente
+     * @param \Illuminate\Support\Collection $orderIds IDs de $orders
+     * @param \Illuminate\Support\Collection $itemsInput Rubros medidos: [['rubro_id' => x, 'quantity' => y], ...]
+     * @param array $excludeCertificationIds IDs de item_certifications a excluir del cálculo de saldo ya usado
+     * @return array [order_id => [rubro_id => quantity]]
+     */
+    private function distribuirRepartoEntreOrdenes($orders, $orderIds, $itemsInput, array $excludeCertificationIds = [])
+    {
+        // Cant. a Ejecutar por orden y rubro (lo asignado en items_orders de cada orden)
+        $cantidadesPorOrden = ItemOrder::whereIn('order_id', $orderIds)
+            ->get()
+            ->groupBy('order_id')
+            ->map(function ($rows) {
+                return $rows->pluck('quantity', 'rubro_id');
+            });
+
+        // Lo ya certificado por orden y rubro en actas previas
+        $certificadoQuery = ItemCertificationDetail::join('item_certifications', 'item_certifications.id', '=', 'item_certification_details.item_certification_id')
+            ->whereIn('item_certifications.order_id', $orderIds);
+
+        if (!empty($excludeCertificationIds)) {
+            $certificadoQuery->whereNotIn('item_certifications.id', $excludeCertificationIds);
+        }
+
+        $certificadoPorOrden = $certificadoQuery
+            ->selectRaw('item_certifications.order_id as order_id, item_certification_details.rubro_id as rubro_id, SUM(item_certification_details.quantity) as total')
+            ->groupBy('item_certifications.order_id', 'item_certification_details.rubro_id')
+            ->get()
+            ->groupBy('order_id')
+            ->map(function ($rows) {
+                return $rows->pluck('total', 'rubro_id');
+            });
+
+        $detallesPorOrden = []; // [order_id => [rubro_id => quantity]]
+        foreach ($itemsInput as $itemInput) {
+            $rubroId = $itemInput['rubro_id'];
+            $restante = (float) $itemInput['quantity'];
+
+            foreach ($orders as $order) {
+                if ($restante <= 0) {
+                    break;
+                }
+                $asignadoOrden = (float) ($cantidadesPorOrden[$order->id][$rubroId] ?? 0);
+                $certificadoOrden = (float) ($certificadoPorOrden[$order->id][$rubroId] ?? 0);
+                $saldoOrden = max(0, $asignadoOrden - $certificadoOrden);
+                if ($saldoOrden <= 0) {
+                    continue;
+                }
+                // Redondeamos a 2 decimales en cada paso para evitar arrastre de error de punto flotante
+                $aplicar = round(min($restante, $saldoOrden), 2);
+                $detallesPorOrden[$order->id][$rubroId] = round(($detallesPorOrden[$order->id][$rubroId] ?? 0) + $aplicar, 2);
+                $restante = round($restante - $aplicar, 2);
+            }
+
+            // Excedente sin saldo en ninguna orden del grupo: se registra contra la orden más reciente
+            // (permite exceder saldo, igual que la carga por orden individual)
+            if ($restante > 0) {
+                $ordenMasReciente = $orders->last();
+                $detallesPorOrden[$ordenMasReciente->id][$rubroId] = round(($detallesPorOrden[$ordenMasReciente->id][$rubroId] ?? 0) + $restante, 2);
+            }
+        }
+
+        return $detallesPorOrden;
     }
 
     /**
