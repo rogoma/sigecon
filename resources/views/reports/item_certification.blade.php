@@ -75,8 +75,18 @@
     }
 </style>
 <body>
+    @php
+        // Se embebe la imagen como data URI en lugar de referenciarla por ruta: dompdf resuelve las rutas de
+        // archivo local contra su "chroot" y en Windows esa resolución falla de forma intermitente (aparece
+        // el texto "Image not found or type unknown" en el PDF en lugar del logo). El data URI no depende
+        // de esa resolución de rutas.
+        $logoPath = public_path('img/logoVI_2.png');
+        $logoDataUri = is_file($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
+    @endphp
     <header>
-        <img src="{{ public_path('img/logoVI_2.png') }}" alt="Logo" style="height: 65px;">
+        @if ($logoDataUri)
+            <img src="{{ $logoDataUri }}" alt="Logo" style="height: 65px;">
+        @endif
     </header>
 
     <footer></footer>
