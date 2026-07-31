@@ -40,7 +40,7 @@ class OrdersEjecsController extends Controller
         $create_permissions = ['admin.orders.create', 'orders.orders.create'];
         $update_permissions = ['admin.orders.update', 'orders.orders.update'];
 
-        $this->middleware('checkPermission:' . implode(',', $index_permissions))->only(['index', 'view']); // Permiso para index/view
+        $this->middleware('checkPermission:' . implode(',', $index_permissions))->only('index'); // Permiso para index
         $this->middleware('checkPermission:' . implode(',', $create_permissions))->only(['create', 'store']);   // Permiso para create
         $this->middleware('checkPermission:' . implode(',', $update_permissions))->only(['edit', 'update']);   // Permiso para update
 
@@ -280,15 +280,31 @@ class OrdersEjecsController extends Controller
     {
         $componentId = $request->input('component_id');
         $locality = $request->input('locality_id');
+        $district = $request->input('district_id');
 
         // Buscar el número máximo solo de los registros con la misma localidad
         $maxNumber = Order::where('component_id', $componentId)
             ->where('locality_id', $locality) // Filtra por localidad
             ->max('number');
 
+        // Verifica si el Componente ya fue procesado en esa Localidad/Distrito
+        $exists = false;
+        if ($componentId && $locality && $district) {
+            $existsQuery = Order::where('component_id', $componentId)
+                ->where('locality_id', $locality)
+                ->where('district_id', $district);
+
+            if ($request->filled('order_id')) {
+                $existsQuery->where('id', '!=', $request->input('order_id'));
+            }
+
+            $exists = $existsQuery->exists();
+        }
+
         return response()->json([
             'success' => true,
-            'number' => $maxNumber ?? 0 // Si no hay registros, devuelve 0
+            'number' => $maxNumber ?? 0, // Si no hay registros, devuelve 0
+            'exists' => $exists
         ]);
     }
 
@@ -389,6 +405,12 @@ class OrdersEjecsController extends Controller
         $order = Order::findOrFail($order_id);
         $post_max_size = $this->postMaxSize;
 
+        // Guarda el estado original de la orden ANTES de aplicar cambios, para saber si el campo
+        // "Fecha emisión de la orden" estaba habilitado en el formulario (ver update.blade.php:
+        // se deshabilita si no hay items o si el estado es distinto de 10)
+        $originalOrderStateId = $order->order_state_id;
+        $originalItemsCount = $order->items->count();
+
         $rules = [
             'component_id' => [
                 'required',
@@ -443,8 +465,8 @@ class OrdersEjecsController extends Controller
 
             // Pasó todas las validaciones, guardamos el archivo        
             $fileName = 'fin_orden_'.$order->component_code.'.'.$order->number.'_'.$request->input('sign_date_fin').'.'.$extension; // nombre a guardar
-            // Cargamos el archivo en disco privado (storage/app/files), sin acceso público directo
-            $path = $request->file('file')->storeAs('files', $fileName);
+            // Cargamos el archivo (ruta storage/app/public/files, enlace simbólico desde public/files)
+            $path = $request->file('file')->storeAs('public/files', $fileName);
 
             $order->file = $fileName; // Guardamos el nombre del archivo en la base de datos
         }
@@ -452,27 +474,32 @@ class OrdersEjecsController extends Controller
         
 
         // SI ESTADO = (11) PENDIENTE DE CARGA DE RUBROS Y ACUSE CONTRATISTA Y FINALIZADO SON VACIOS
-        if (is_null($request->input('sign_date') && (is_null($request->input('sign_date_fin')))) && $order->order_state_id = 11) {
-            $order->order_state_id = 11;        
+        if (is_null($request->input('sign_date')) && is_null($request->input('sign_date_fin')) && $originalOrderStateId == 11) {
+            $order->order_state_id = 11;
         }
 
-        if (is_null($request->input('sign_date') && (is_null($request->input('sign_date_fin')))) && $order->order_state_id = 10) {
-            $order->order_state_id = 10;        
+        if (is_null($request->input('sign_date')) && is_null($request->input('sign_date_fin')) && $originalOrderStateId == 10) {
+            $order->order_state_id = 10;
         }
 
-        if (($request->input('sign_date') && (is_null($request->input('sign_date_fin')))) && $order->order_state_id = 10) {
-            $order->order_state_id = 1;        
+        if ($request->filled('sign_date') && is_null($request->input('sign_date_fin')) && $originalOrderStateId == 10) {
+            $order->order_state_id = 1;
         }
         
         // CONTROLA QUE ESTE EN ESTADO FINALIZADO Y QUE ESTE CARGADO FECHA DE FINALIZACIÓN
+        // SI Fecha acuse recibo Contratista está en blanco se graba null en sign_date
         if ($request->filled('sign_date_fin')) {
             $order->sign_date_fin = date('Y-m-d', strtotime(str_replace("/", "-", $request->input('sign_date_fin'))));
-            $order->sign_date = date('Y-m-d', strtotime(str_replace("/", "-", $request->input('sign_date'))));
-            $order->order_state_id = 4;            
+            $order->sign_date = $request->filled('sign_date')
+                ? date('Y-m-d', strtotime(str_replace("/", "-", $request->input('sign_date'))))
+                : null;
+            $order->order_state_id = 4;
         } else {
-            $order->sign_date = date('Y-m-d', strtotime(str_replace("/", "-", $request->input('sign_date'))));            
+            $order->sign_date = $request->filled('sign_date')
+                ? date('Y-m-d', strtotime(str_replace("/", "-", $request->input('sign_date'))))
+                : null;
             $order->sign_date_fin = null;
-        }       
+        }
 
         $order->locality_id = $request->input('locality_id');
         $order->component_id = $request->input('component_id');
@@ -508,11 +535,13 @@ class OrdersEjecsController extends Controller
         // var_dump($order->order_state_id);exit;
         
 
-        //SI ESTADO ES EN CURSO DEBE GUARDAR FECHA OCULTA created_at_hidd
-        if (in_array($order->order_state_id, [1, 4])) {
-           $order->created_at = date('Y-m-d', strtotime(str_replace("/", "-", $request->input('created_at_hidd')))); //fecha de la orden  
+        //SI EL CAMPO "Fecha emisión de la orden" ESTABA DESHABILITADO EN EL FORMULARIO
+        //(SIN ITEMS O ESTADO ORIGINAL DISTINTO DE 10, EJ: 11) NO SE MODIFICA created_at,
+        //SE MANTIENE EL VALOR ORIGINAL ENVIADO EN EL CAMPO OCULTO created_at_hidd
+        if ($originalOrderStateId == 10 && $originalItemsCount > 0) {
+           $order->created_at = date('Y-m-d', strtotime(str_replace("/", "-", $request->input('created_at')))); //fecha de la orden
         } else {
-           $order->created_at = date('Y-m-d', strtotime(str_replace("/", "-", $request->input('created_at')))); //fecha de la orden 
+           $order->created_at = date('Y-m-d', strtotime(str_replace("/", "-", $request->input('created_at_hidd')))); //fecha de la orden original, no se modifica
         }
 
         $order->save();
@@ -585,17 +614,5 @@ class OrdersEjecsController extends Controller
                 'code' => 200
             ], 200);
         }
-    }
-
-    /**
-     * Sirve el archivo de finalización de la orden inline (para previsualizar en el navegador),
-     * respetando los mismos permisos que index.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function view(Request $request, $order_id)
-    {
-        $order = Order::findOrFail($order_id);
-        return Storage::response('files/'.$order->file);
     }
 }

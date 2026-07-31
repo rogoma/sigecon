@@ -145,6 +145,9 @@
                                                     </div>
                                                 </div> --}}
 
+                                                <div id="mensaje-componente-duplicado"
+                                                    style="color: red; font-size: 18px; padding: 10px;"></div>
+
                                                 <div class="form-group row">
                                                     {{-- <div class="col-sm-3">
                                                         <label for="sign_date" class="col-form-label">Fecha acuse recibo
@@ -273,6 +276,9 @@
             // Limpia el campo de texto al cambiar de componente
             numberInput.val('');
 
+            // Limpia el mensaje de componente duplicado al cambiar de componente
+            $('#mensaje-componente-duplicado').text('');
+
             if (componentId && locality) {
                 // Realiza la solicitud al backend incluyendo la localidad
                 fetch(`${url}?component_id=${componentId}&locality_id=${locality}`)
@@ -284,6 +290,17 @@
                             numberInput.val(nextNumber); // Actualiza el valor del input
                             $('#number_hidden').val(
                                 nextNumber); // Actualiza el valor del input oculto
+
+                            // Si ya existe una orden con este Componente en esta Localidad/Distrito, avisa al usuario
+                            if (maxNumber > 0) {
+                                let componentText = $('#component_id option:selected').text().trim();
+                                let districtText = $('#district_id option:selected').text().trim();
+                                let localityText = $('#locality_id option:selected').text().trim();
+                                $('#mensaje-componente-duplicado').text(
+                                    'Atención: en la Localidad "' + localityText + '" / Distrito "' + districtText +
+                                    '" ya se procesó el Componente "' + componentText + '".'
+                                );
+                            }
                         } else {
                             console.error('Error al obtener el número:', data.message);
                             numberInput.val('Error'); // Muestra un mensaje en caso de error
@@ -294,7 +311,7 @@
                         numberInput.val('Error'); // Muestra un mensaje en caso de error
                     });
             }
-        });        
+        });
 
         // Evento para cargar distritos al cambiar el departamento
         $('#department_id').on('change', function() {

@@ -212,16 +212,16 @@
                                                         <label for="sign_date" class="col-form-label">Fecha acuse recibo Contratista</label>
                                                         <div class="input-group">
                                                             <input type="text" id="sign_date" name="sign_date"
-                                                                {{-- DISABLED INGRESO DE FECHA SI LA ORDEN NO TIENE DETALLE DE RUBROS --}}
+                                                                {{-- DISABLED INGRESO DE FECHA SI LA ORDEN NO TIENE DETALLE DE RUBROS O SI ESTADO = 11 --}}
                                                                 class="form-control @error('sign_date') is-invalid @enderror"
                                                                 @if ($order->items->count() > 0 && $order->order_state_id == 1)  @endif
                                                                 value="{{ old('sign_date', !empty($order->sign_date) ? date('d/m/Y', strtotime($order->sign_date)) : '') }}"
                                                                 autocomplete="off"
-                                                                @if ($order->items->count() == 0) disabled @endif>
+                                                                @if ($order->items->count() == 0 || $order->order_state_id == 11) disabled @endif>
                                                             <span class="input-group-append">
                                                                 <button type="button" class="btn btn-outline-secondary"
                                                                     onclick="show('sign_date');"
-                                                                    {{ empty($order->sign_date) ? 'disabled' : '' }}>
+                                                                    {{ (empty($order->sign_date) || $order->order_state_id == 11) ? 'disabled' : '' }}>
                                                                     <i class="fa fa-calendar"></i>
                                                                 </button>
                                                             </span>
@@ -661,8 +661,11 @@
         //CONTROLA QUE NO TENGA FECHA ACUSE SIN FECHA DE ORDEN
         function toggleSignDate() {
             const createdVal = $('#created_at').val().trim();
-            if (createdVal === '') {
-                $('#sign_date').prop('disabled', true).val(''); // deshabilita y limpia
+            if (createdVal === '' || orderStateId === 11) {
+                $('#sign_date').prop('disabled', true); // deshabilita
+                if (createdVal === '') {
+                    $('#sign_date').val(''); // limpia solo si no hay fecha de orden
+                }
             } else {
                 $('#sign_date').prop('disabled', false);       // habilita
             }
