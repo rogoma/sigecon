@@ -201,6 +201,34 @@
             margin-top: 10px;
         }
 
+        /* ---------- Búsqueda general de Órdenes de Ejecución - En Curso ---------- */
+        .contra-page .acta-general-search {
+            padding: 12px 20px;
+            background: #fff;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contra-page .acta-general-search label {
+            margin: 0;
+            font-weight: 600;
+            color: var(--acta-primary-dark);
+            font-size: 13.5px;
+            white-space: nowrap;
+        }
+
+        .contra-page .acta-general-search .input-group {
+            max-width: 420px;
+        }
+
+        .contra-page .acta-general-search .input-group-text {
+            background: #eef5f9;
+            color: var(--acta-primary-dark);
+            border-color: #ced4da;
+        }
+
         .contra-page .badge-pill {
             padding: 5px 12px;
             font-weight: 600;
@@ -450,6 +478,16 @@
                                             No hay órdenes de ejecución en estado "En Curso" para este contrato.
                                         </div>
                                     @else
+                                        <div class="acta-general-search">
+                                            <label for="generalOrderSearch"><i class="fa-solid fa-magnifying-glass"></i> Búsqueda general:</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
+                                                </div>
+                                                <input type="text" id="generalOrderSearch" class="form-control"
+                                                    placeholder="Buscar en todas las Localidades/Distritos...">
+                                            </div>
+                                        </div>
                                         @php
                                             // Agrupación multinivel: Distrito -> Localidad -> Sub-Componente
                                             // Las actas de medición se generan por Localidad + Sub-Componente y pueden abarcar distintos periodos.
@@ -791,6 +829,53 @@
                         { "responsivePriority": 3, "targets": 2 },  // Monto Orden
                         { "responsivePriority": 10, "targets": [1, 3, 4, 5] },
                     ],
+                });
+            });
+
+            // Búsqueda general: filtra a la vez todas las tablas de Órdenes de Ejecución - En Curso
+            // (independiente del buscador propio de cada tabla por Localidad) y oculta los grupos
+            // Distrito/Localidad/Sub-Componente que se quedan sin coincidencias.
+            // NOTA: se usa .css('display') en vez de :visible para chequear cada nivel, porque :visible
+            // exige que TODOS los ancestros estén visibles: si se usara :visible, un grupo ya oculto en
+            // una búsqueda anterior nunca podría volver a mostrarse (sus hijos "no se ven" aunque su
+            // propio display ya esté en 'block'), dejando la búsqueda general trabada sin filtrar.
+            $('#generalOrderSearch').on('keyup input', function() {
+                const value = $(this).val();
+                const term = value.trim().toLowerCase();
+
+                // Nivel Sub-Componente: aplica el filtro a la tabla de cada grupo.
+                // El nombre de Distrito/Localidad/Sub-Componente se muestra en un encabezado
+                // fuera de la tabla, por lo que DataTables no lo busca por sí solo: si el término
+                // coincide con ese encabezado, se muestran todas las órdenes del grupo sin filtrar filas.
+                $('.acta-group-subcomponente').each(function() {
+                    const $group = $(this);
+                    const dt = $group.find('.acta-orders-table').DataTable();
+
+                    const breadcrumbText = $group.find('.acta-group-breadcrumb').text().toLowerCase();
+                    const breadcrumbMatch = term !== '' && breadcrumbText.includes(term);
+
+                    dt.search(breadcrumbMatch ? '' : value).draw();
+
+                    const rowsMatch = dt.rows({ search: 'applied' }).count() > 0;
+                    $group.toggle(breadcrumbMatch || rowsMatch);
+                });
+
+                // Nivel Localidad: visible si tiene al menos un Sub-Componente con coincidencias
+                $('.acta-group-localidad').each(function() {
+                    const $localidad = $(this);
+                    const hasMatch = $localidad.find('.acta-group-subcomponente').filter(function() {
+                        return $(this).css('display') !== 'none';
+                    }).length > 0;
+                    $localidad.toggle(hasMatch);
+                });
+
+                // Nivel Distrito: visible si tiene al menos una Localidad con coincidencias
+                $('.acta-group-distrito').each(function() {
+                    const $distrito = $(this);
+                    const hasMatch = $distrito.find('.acta-group-localidad').filter(function() {
+                        return $(this).css('display') !== 'none';
+                    }).length > 0;
+                    $distrito.toggle(hasMatch);
                 });
             });
 
