@@ -619,7 +619,7 @@ class ContractsController extends Controller
             'dependency_id' => 'numeric|required',
             'contract_admin_id' => 'numeric|required',
             'comments' => 'nullable|max:300',
-            'observation' => 'nullable|max:500'
+            // 'observation' => 'nullable|max:500'
             
         );
 
@@ -682,7 +682,7 @@ class ContractsController extends Controller
         $contract->dependency_id = $request->input('dependency_id');
         $contract->contract_admin_id = $request->input('contract_admin_id');
         $contract->comments=$request->input('comments');
-        $contract->observation=$request->input('observation');
+        // $contract->observation=$request->input('observation');
         $contract->creator_user_id = $request->user()->id;  // usuario logueado
         $contract->save();
         return redirect()->route('contracts.show', $contract->id)->with('success', 'Llamado modificado correctamente');
