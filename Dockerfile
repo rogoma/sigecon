@@ -1,4 +1,5 @@
-FROM php:7.4-fpm-buster
+# Laravel 13 requiere PHP 8.3 o superior
+FROM php:8.4-fpm-bookworm
 
 # Set working directory
 WORKDIR /var/www/html

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Sistework;
+namespace App\Models\Contrasis;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;

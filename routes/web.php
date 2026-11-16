@@ -48,7 +48,7 @@ use App\Http\Controllers\Contract\ItemsController;
 use App\Http\Controllers\Contract\ItemAwardHistoriesController;
 use App\Http\Controllers\Contract\OrdersEjecsController;
 use App\Http\Controllers\Dgaf\DgafsController;
-use App\Http\Controllers\LocationController;
+use App\Http\Controllers\Contract\LocationController;
 use App\Http\Controllers\Contract\ItemsOrdersController;
 use App\Http\Controllers\Contract\ItemsContractsController;
 use App\Http\Controllers\Contract\EventsOrdersController;

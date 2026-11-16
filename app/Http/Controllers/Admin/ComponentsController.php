@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Component;
 
-class ComponentsControllerr extends Controller
+class ComponentsController extends Controller
 {
     /**
      * Create a new controller instance.

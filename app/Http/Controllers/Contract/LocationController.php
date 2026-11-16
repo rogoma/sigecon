@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Contract;
 
+use App\Http\Controllers\Controller;
 use App\Models\Department; // Nombre del modelo cambiado
 use App\Models\District; // Nombre del modelo cambiado
 use Illuminate\Http\Request;

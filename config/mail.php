@@ -38,7 +38,9 @@ return [
             'transport' => 'smtp',
             'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
             'port' => env('MAIL_PORT', 587),
-            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            // Laravel 9+ usa Symfony Mailer: "encryption" ya no existe. Con scheme null se usa
+            // "smtps" si el puerto es 465 y "smtp" (con STARTTLS si el servidor lo ofrece) en el resto.
+            'scheme' => env('MAIL_SCHEME'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,

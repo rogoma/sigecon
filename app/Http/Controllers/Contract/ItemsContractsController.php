@@ -26,7 +26,7 @@ use App\Models\ItemContract;
 use App\Models\ItemCertification;
 use App\Models\ItemCertificationDetail;
 use Mpdf\Mpdf;
-use Barryvdh\DomPDF\Facade as Pdf;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;

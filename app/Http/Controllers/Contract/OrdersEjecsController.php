@@ -176,25 +176,73 @@ class OrdersEjecsController extends Controller
         }
 
         $order_states = OrderState::all();
-        $departments = Department::all();
+        $departments = $this->departmentsFor($contract);
         $districts = District::all();
         $localities = Locality::all();
-        $item_contract = ItemContract::where('contract_id', $contract_id)->get();        
+        $item_contract = ItemContract::where('contract_id', $contract_id)->get();
 
         return view('contract.orders.create', compact('contract', 'order_states',
             'components','departments','districts', 'localities'));
     }
 
+    // RESTRICCIONES PARA CONTRATOS TIPO 7
+    // Departamento => distritos habilitados
+    private const TYPE7_DISTRICTS = [
+        1 => [12],
+        2 => [17],
+        5 => [96],
+        7 => [112, 118],
+        9 => [157, 163],
+    ];
+
+    // Distrito => localidades habilitadas (96 = Yhú, 65 = localidad Yhú)
+    private const TYPE7_LOCALITIES = [
+        96 => [65],
+    ];
+
+    private function isType7($contract)
+    {
+        return $contract && $contract->contract_type_id == 7;
+    }
+
+    private function departmentsFor($contract)
+    {
+        if ($this->isType7($contract)) {
+            return Department::whereIn('id', array_keys(self::TYPE7_DISTRICTS))->orderBy('id')->get();
+        }
+        return Department::all();
+    }
+
+    private function districtsQuery($contract, $department_id)
+    {
+        $query = District::where('department_id', $department_id);
+        if ($this->isType7($contract)) {
+            $query->whereIn('id', self::TYPE7_DISTRICTS[(int) $department_id] ?? []);
+        }
+        return $query->orderBy('id');
+    }
+
+    private function localitiesQuery($contract, $district_id)
+    {
+        $query = Locality::where('district_id', $district_id);
+        if ($this->isType7($contract) && isset(self::TYPE7_LOCALITIES[(int) $district_id])) {
+            $query->whereIn('id', self::TYPE7_LOCALITIES[(int) $district_id]);
+        }
+        return $query;
+    }
+
     // PARA ANIDAR COMBOS
     public function fetchDistricts(Request $request)
     {
-        $districts = District::where('department_id', $request->department_id)->get();
+        $contract = $request->filled('contract_id') ? Contract::find($request->contract_id) : null;
+        $districts = $this->districtsQuery($contract, $request->department_id)->get();
         return response()->json($districts);
     }
 
     public function fetchLocalities(Request $request)
-    {        
-        $localities = Locality::where('district_id', $request->district_id)->get();
+    {
+        $contract = $request->filled('contract_id') ? Contract::find($request->contract_id) : null;
+        $localities = $this->localitiesQuery($contract, $request->district_id)->get();
         return response()->json($localities);
     }
 
@@ -361,10 +409,16 @@ class OrdersEjecsController extends Controller
         $order = Order::findOrFail($order_id);
         // $components = Component::orderBy('id')->get(); //ordenado por id componente
         $order_states = OrderState::all();
-        $departments = Department::all();
-        $districts = District::all();
-        $localities = Locality::all();
-        $items = $order->items;        
+        $departments = $this->departmentsFor($contract);
+        if ($this->isType7($contract)) {
+            // Precarga solo los distritos/localidades habilitados para la orden actual
+            $districts = $this->districtsQuery($contract, $order->department_id)->get();
+            $localities = $this->localitiesQuery($contract, $order->district_id)->get();
+        } else {
+            $districts = District::all();
+            $localities = Locality::all();
+        }
+        $items = $order->items;
 
         return view('contract.orders.update', compact('contract', 'order', 'components', 
         'order_states', 'departments', 'districts', 'localities', 'items', 'post_max_size')); // Se pasa el tamaño máximo permitido para el archivo
@@ -614,5 +668,26 @@ class OrdersEjecsController extends Controller
                 'code' => 200
             ], 200);
         }
+    }
+
+    /**
+     * Sirve el archivo de finalización de la orden inline (para previsualizar en el navegador).
+     * update() lo guarda en storage/app/public/files; las órdenes antiguas lo tienen en storage/app/files.
+     */
+    public function view(Request $request, $order_id)
+    {
+        $order = Order::findOrFail($order_id);
+
+        if (empty($order->file)) {
+            abort(404, 'La orden no tiene archivo de finalización cargado.');
+        }
+
+        foreach (['public/files/', 'files/'] as $dir) {
+            if (Storage::exists($dir.$order->file)) {
+                return Storage::response($dir.$order->file);
+            }
+        }
+
+        abort(404, 'No se encontró el archivo de finalización de la orden.');
     }
 }

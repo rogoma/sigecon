@@ -207,8 +207,8 @@
                                                 </li>
                                             @endif
 
-                                            {{-- si es contrato de obras --}}
-                                            @if ($contract->contract_type_id == 2)     
+                                            {{-- si es contrato de obras o alcantarillado, mostrar rubros y ordenes de ejecucion --}}
+                                            @if (in_array($contract->contract_type_id, [2, 7]))
                                                 {{-- No mostrar nada si el contrato es abierto --}}
                                                 @if (Auth::user()->hasPermission(['admin.items.create', 'contracts.rubros.import']))
                                                     <li class="nav-item">

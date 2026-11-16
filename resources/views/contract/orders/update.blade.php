@@ -347,6 +347,7 @@
                                             <br>
                                             <br>
                                             <p><span style="color: red;"></span></p>
+                                            @if ($contract->contract_type_id != 7)
                                             <ul style="color: red;">
                                                 REFERENCIAS: PLAZO EN DIAS:
                                                 * Fuente de Provisión: 30 *
@@ -358,6 +359,7 @@
                                                 Aductora: 30 *
                                                 Cercado Perim.: 30
                                             </ul>
+                                            @endif
                                         </form>
                                     </div>
                                 </div>
@@ -445,7 +447,8 @@
                     url: '/fetch-districts',
                     type: 'GET',
                     data: {
-                        department_id: departmentId
+                        department_id: departmentId,
+                        contract_id: {{ $contract->id }}
                     },
                     success: function(data) {
                         // Agrega las opciones al combo de distritos
@@ -477,7 +480,8 @@
                     url: '/fetch-localities',
                     type: 'GET',
                     data: {
-                        district_id: districtId
+                        district_id: districtId,
+                        contract_id: {{ $contract->id }}
                     },
                     success: function (data) {
                         // Agrega las opciones al combo de localidades

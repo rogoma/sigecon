@@ -105,7 +105,8 @@ class ContractsController extends Controller
             //DETERMINAR QUE DEPENDENCIAS DEBEN SOLO VER CONTRATOS DE OBRAS
             $contracts = Contract::with(['dependency', 'provider', 'contractState', 'contractType'])
                     ->where('contract_state_id', '>=', 1)
-                    ->where('contract_type_id', '=', 2)//solo muestra contratos de obras
+                    ->whereIn('contract_type_id', [7])//solo muestra contratos de obras y/o alcantarillados
+                    // ->whereIn('contract_type_id', [2,7])//solo muestra contratos de obras y/o alcantarillados
                     ->where('contract_state_id', '=', 1)//solo muestra contratos en cursos
                     ->where('year_adj', '>=', 2024)//solo muestra desde año 2024
                     ->orderBy('iddncp','asc')

@@ -187,7 +187,8 @@
 
                     // Solo calcular si fecha_acuse_contr NO es null
                     if ($fechaAcuse) {
-                        $diferenciaDias = $hoy->diffInDays($fechaFinPlazo, false); // Puede ser negativa si ya venció
+                        // Carbon 3 devuelve un float con decimales; (int) conserva los días enteros como en Carbon 2
+                        $diferenciaDias = (int) $hoy->diffInDays($fechaFinPlazo, false); // Puede ser negativa si ya venció
 
                         $vencido = $diferenciaDias < 0; // Si es menor que 0, ya venció
                         $vencidomsj = "PLAZO VENCIDO";

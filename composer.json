@@ -8,29 +8,25 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^7.3",
+        "php": "^8.3",
         "ext-gd": "*",
-        "barryvdh/laravel-dompdf": "^0.8.7",
-        "doctrine/dbal": "^2.11",
-        "elibyy/tcpdf-laravel": "^8.1",
-        "fideloper/proxy": "^4.2",
-        "fruitcake/laravel-cors": "^2.0",
-        "geekcom/phpjasper": "^3.3",
-        "guzzlehttp/guzzle": "^7.3",
-        "laravel/framework": "^8.0",
-        "laravel/tinker": "^2.0",
-        "maatwebsite/excel": "^3.1",
-        "mpdf/mpdf": "^8.0",
-        "nesbot/carbon": "^2.72",
-        "phpoffice/phpspreadsheet": "^1.19",
-        "yajra/laravel-datatables-oracle": "^9.19"
+        "barryvdh/laravel-dompdf": "^3.1",
+        "elibyy/tcpdf-laravel": "^13.0",
+        "geekcom/phpjasper": "^3.4",
+        "guzzlehttp/guzzle": "^7.8",
+        "laravel/framework": "^13.0",
+        "laravel/tinker": "^3.0",
+        "maatwebsite/excel": "^3.1.70",
+        "mpdf/mpdf": "^8.2",
+        "nesbot/carbon": "^3.8",
+        "phpoffice/phpspreadsheet": "^1.30",
+        "yajra/laravel-datatables-oracle": "^13.0"
     },
     "require-dev": {
-        "facade/ignition": "^2.3.6",
-        "fakerphp/faker": "^1.19",
-        "mockery/mockery": "^1.3.1",
-        "nunomaduro/collision": "^5.0",
-        "phpunit/phpunit": "^9.3"
+        "fakerphp/faker": "^1.24",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "phpunit/phpunit": "^12.5"
     },
     "config": {
         "optimize-autoloader": true,
@@ -39,7 +35,9 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "elibyy/tcpdf-laravel"
+            ]
         }
     },
     "autoload": {

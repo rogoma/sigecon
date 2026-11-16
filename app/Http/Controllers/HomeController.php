@@ -60,9 +60,17 @@ class HomeController extends Controller
             ->get();
 
             if($user->count() == 0){
+                // Auth::attempt ya inició la sesión: la cerramos para que el usuario inactivo no quede autenticado
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
                 $validator->errors()->add('bad_credentials', 'Usuario Inactivo');
                 return back()->withErrors($validator)->withInput();
             }
+
+            // Regeneramos el id de sesión para evitar la fijación de sesión
+            $request->session()->regenerate();
 
             // Migración perezosa: si la contraseña todavía tiene el hash SHA1 legado,
             // la regeneramos con bcrypt ahora que sabemos la contraseña en texto plano.
@@ -90,6 +98,8 @@ class HomeController extends Controller
      */
     public function logout(Request $request){
         Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return redirect('/login');
     }
 }
